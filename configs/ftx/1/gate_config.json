@@ -1,0 +1,33 @@
+{
+  "exchange": {
+    "name": "ftx",
+    "instance": 1
+  },
+  "account": {
+    "api_key": "61d213fc48bacd88816474cc",
+    "secret_key": "8dga8934-02b7-4b66-963e-18b413f4e6cb",
+    "passphrase": "i1i1id04d0c"
+  },
+  "aeron": {
+    "publishers": {
+      "orderbook": {
+        "channel": "aeron:udp?control=172.31.14.205:40456|control-mode=dynamic",
+        "stream_id": 1001
+      },
+      "balance": {
+        "channel": "aeron:udp?control=172.31.14.205:40456|control-mode=dynamic",
+        "stream_id": 1002
+      },
+      "log": {
+        "channel": "aeron:udp?endpoint=3.66.183.27:44444|control-mode=dynamic",
+        "stream_id": 1001
+      }
+    },
+    "subscribers": {
+      "core": {
+        "channel": "aeron:udp?endpoint=172.31.14.205:40457|control=172.31.14.205:40456",
+        "stream_id": 1003
+      }
+    }
+  }
+}
