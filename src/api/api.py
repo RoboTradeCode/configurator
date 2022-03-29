@@ -94,7 +94,7 @@ async def get_markets(
             configs_update_time_dict[exchange_id + instance] = configs_last_update_time
         # Если запрос требует только обновленные данные, то возвращаю ответ, что новых данных нет.
         elif only_new:
-            return fastapi.responses.JSONResponse(status_code=200, content={'is_updated': False})
+            return fastapi.responses.JSONResponse(status_code=200, content={'is_new': False})
 
         logger.info(f'Конфиги для /{exchange_id}/{instance} загружены.')
 
