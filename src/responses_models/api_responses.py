@@ -30,5 +30,6 @@ class MarketsResponseData(BaseModel):
 
 
 class MarketsResponse(BaseModel):
-    success: bool
+    is_new: bool
     data: MarketsResponseData
+
