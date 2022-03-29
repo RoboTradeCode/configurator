@@ -6,7 +6,7 @@
 \version 1.0.1
 """
 ROUTE_ASSETS = ['BTC', 'ETH', 'USDT']
-PATH_TO_CONFIGS = '//configs'
+PATH_TO_CONFIGS = './configs'
 
 ERROR_LOG_FILENAME = ".configurator-errors.log"
 

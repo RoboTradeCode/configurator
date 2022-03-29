@@ -30,7 +30,7 @@ class ConfigsNotFound(fastapi.HTTPException):
     def __init__(self, exchange_id: str, instance: str):
         self.status_code = 404
         self.detail = {
-                "title": f'Конфигурация ен найдена.',
+                "title": f'Конфигурация не найдена.',
                 "detail": f'Не найдена конфигурация для gate или core «/{exchange_id}/{instance}».'
             }
 
