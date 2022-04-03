@@ -46,7 +46,7 @@ configs_update_time_dict: dict[str, float] = {}
 # Вовзращает данные, только если они ещё не были получены (т.е., если ещё не было запроса на эти "биржа/инстанс") или
 # если они обновились с момента последнего запроса.
 # Чтобы получить данные вне зависимости от предыдущего условия, нужно указать параметр запроса ?only_update=False
-@app.get("/{exchange_id}/{instance}", response_model=MarketsResponse)
+@app.get('/{exchange_id}/{instance}', response_model=MarketsResponse)
 async def get_markets(
         exchange_id: str,
         instance: str,
@@ -145,6 +145,13 @@ async def get_markets(
     except Exception as e:
         logger.error("Неожиданное исключение во время обработки данных.", exc_info=True)
         raise UnexpectedError(exchange_id, e)
+
+
+# Эндпоинт для пинга
+# Возвращает тело запроса с полем {"pong": true}
+@app.get('/ping')
+async def get_ping():
+    return {"pong": True}
 
 if __name__ == "__main__":
     asyncio.run(get_markets('kucoin', '1'))
