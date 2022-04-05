@@ -10,8 +10,8 @@
 
 Пример URL для подключения: 
 
-- http://3.68.58.96:8000/binance/1
-- http://3.68.58.96:8000/ping
+- https://configurator.robotrade.io/binance/1
+- https://configurator.robotrade.io/ping
 
 Общее описание Configurator
 --------
@@ -202,9 +202,9 @@ Endpoint: `GET /{exchange_id}/{instance}`
 
 #### Примеры:
 
-`http://3.68.58.96:8000/binance/1`
+`https://configurator.robotrade.io/binance/1`
 
-`http://3.68.58.96:8000/kucoin/1?only_new=false`
+`https://configurator.robotrade.io/kucoin/1?only_new=false`
 
 Подробное описание доступно в [Wiki](https://github.com/RoboTradeCode/configurator/wiki/%D0%9E%D1%81%D0%BD%D0%BE%D0%B2%D0%BD%D0%BE%D0%B9-%D1%8D%D0%BD%D0%B4%D0%BF%D0%BE%D0%B8%D0%BD%D1%82-Configurator).
 
@@ -224,7 +224,7 @@ Endpoint: `GET /ping`
 
 #### Примеры:
 
-`http://3.68.58.96:8000/ping`
+`https://configurator.robotrade.io/ping`
 
 Описание также доступно в [Wiki](https://github.com/RoboTradeCode/configurator/wiki/%D0%AD%D0%BD%D0%B4%D0%BF%D0%BE%D0%B8%D0%BD%D1%82-ping).
 
