@@ -71,19 +71,27 @@ async def get_markets(
     # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
     # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
     try:
-        # 1. gate_config - конфигурация шлюза, по сути, просто читаем JSON из папки
-        gate_config = GateConfig(
-            **json.load(open(f'{path_to_configs}/{exchange_id}/{instance}/gate_config.json'))
-        )
-        # 2. core_config - конфигурация ядра, по сути, просто читаем JSON из папки
-        core_config = CoreConfig(
-            **json.load(open(f'{path_to_configs}/{exchange_id}/{instance}/core_config.json'))
-        )
+#        # 1. gate_config - конфигурация шлюза, по сути, просто читаем JSON из папки
+#        gate_config = GateConfig(
+#            **json.load(open(f'{path_to_configs}/{exchange_id}/{instance}/gate_config.json'))
+#        )
+#        # 2. core_config - конфигурация ядра, по сути, просто читаем JSON из папки
+#        core_config = CoreConfig(
+#            **json.load(open(f'{path_to_configs}/{exchange_id}/{instance}/core_config.json'))
+#        )
+#
+        path_to_sections = f'{path_to_configs}/{exchange_id}/{instance}/sections/'
 
-        configs_last_update_time = max(
-            os.path.getmtime(f'{path_to_configs}/{exchange_id}/{instance}/gate_config.json'),
-            os.path.getmtime(f'{path_to_configs}/{exchange_id}/{instance}/core_config.json')
-        )
+        sections_names = [os.path.splitext(section_name)[0] 
+                for section_name in os.listdir(path_to_sections)]
+        
+        sections_content = [json.load(open(path_to_sections + section_name)) for 
+                section_name in sectins_names]
+
+        sections = dict(zip(sections_names, sections_content))
+
+        configs_last_update_time = os.path.getmtime(path_to_sections + '../')
+        
 
         # 3. Проверки, когда последний раз были обновлены конфиги
         # Условие: не отдавать конфиги, если они уже были получены ранее и не обновлялись с того момента.
