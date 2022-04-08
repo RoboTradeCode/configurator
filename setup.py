@@ -3,7 +3,7 @@
 \author github:khanbekov, telegram:qoddrysdaim
 \brief Точка входа Configurator
 \data 2022.03.12
-\version 1.0.1
+\version 1.1.3.1
 """
 import asyncio
 
