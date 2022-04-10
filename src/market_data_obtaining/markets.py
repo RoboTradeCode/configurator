@@ -94,10 +94,8 @@ async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: b
                     if is_decimal_precision
                     else market['precision']['amount']
                 ),
-                assets=market_models.Market.Assets(
-                    base=market['baseId'],
-                    quote=market['quoteId']
-                )
+                base_asset=market['baseId'],
+                quote_asset=market['quoteId']
             )
         )
 

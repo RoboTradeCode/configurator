@@ -20,7 +20,7 @@ def select_markets_by_assets(markets: list[Market], assets: list[str]) -> list[M
     result: list[Market] = []
 
     for market in markets:
-        if market.assets.base in assets and market.assets.quote in assets:
+        if market.base_asset in assets and market.quote_asset in assets:
             result.append(market)
 
     return result
@@ -44,10 +44,10 @@ def route_sequence_to_route(route_sequence: tuple[Market]) -> (list[RouteStep], 
     curr_asset: str
 
     # 1. Нахожу, какой ассет будет первым
-    if route_sequence[0].assets.base in route_sequence[-1].assets.dict().values():
-        first_asset = route_sequence[0].assets.base
-    elif  route_sequence[0].assets.quote in route_sequence[-1].assets.dict().values():
-        first_asset = route_sequence[0].assets.quote
+    if route_sequence[0].base_asset in [route_sequence[-1].base_asset, route_sequence[-1].quote_asset]:
+        first_asset = route_sequence[0].base_asset
+    elif  route_sequence[0].quote_asset in [route_sequence[-1].base_asset, route_sequence[-1].quote_asset]:
+        first_asset = route_sequence[0].quote_asset
     else:
         return result_route, False
 
@@ -55,20 +55,20 @@ def route_sequence_to_route(route_sequence: tuple[Market]) -> (list[RouteStep], 
 
     # 2. Пытаюсь обменять ассеты в заданной последовательности
     for market in route_sequence:
-        if market.assets.base == curr_asset:
+        if market.base_asset == curr_asset:
             result_route.append(RouteStep(
                 source_asset=curr_asset,
                 common_symbol=market.common_symbol,
                 operation='sell')
             )
-            curr_asset = market.assets.quote
-        elif market.assets.quote == curr_asset:
+            curr_asset = market.quote_asset
+        elif market.quote_asset == curr_asset:
             result_route.append(RouteStep(
                 source_asset=curr_asset,
                 common_symbol=market.common_symbol,
                 operation='buy')
             )
-            curr_asset = market.assets.base
+            curr_asset = market.base_asset
         else:
             return result_route, False
 
