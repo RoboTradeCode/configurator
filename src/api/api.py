@@ -19,13 +19,12 @@ from src.market_data_obtaining.markets import get_exchange_by_id, format_markets
 from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, ConfigDecodeError, CCXTError, UnexpectedError
 from src.responses_models.api_responses import MarketsResponseData, MarketsResponse
 from src.market_data_obtaining.routes import construct_routes
-from src.settings import ROUTE_ASSETS, PATH_TO_CONFIGS, LOGGING_CONFIG
+from src.settings import PATH_TO_CONFIGS_FOLDER, LOGGING_CONFIG
 
 # Конфигурация API
-route_assets: list[str] = ROUTE_ASSETS
-path_to_configs = PATH_TO_CONFIGS
+path_to_configs_folder = PATH_TO_CONFIGS_FOLDER
 
-# logging.config.dictConfig(LOGGING_CONFIG)
+logging.config.dictConfig(LOGGING_CONFIG)
 logger = logging.getLogger(__name__)
 
 app = fastapi.FastAPI()
@@ -36,6 +35,30 @@ app = fastapi.FastAPI()
 # float - время изменения, os.path.getmtime()
 # Значение в словаре обновляется при каждом запросе этих конфигов
 configs_update_time_dict: dict[str, float] = {}
+
+# Функци для получния конфигурации по торговому серверу
+# path_to_configs: str - путь до конфига (абсолютный или относительный
+# return dict - словарь с соответствием Имя_файла_конфига : Содержимое_файла
+def get_configs(path_to_configs: str) -> dict:
+    # Получение списка файлов в папке с конфигами (нужно для названий секций)
+    files: list = os.listdir(path_to_configs)
+
+    # Чтение файлов для получения конфигурации
+    files_content: lsit = []
+    for file_name in files:
+        try: 
+            current_file_content: dict = json.load(open(f'{path_to_configs}{file_name}'))
+            # Проверка на пустоту (пустой dict интерпретируется как false) 
+            if current_file_content:
+                logger.error(f'Файл конфигурации {file_name} пустой.')
+            files_content.append(current_file_content)
+        except Exception as e: 
+            logger.error(f'Не удалось получить конфигурацию {file_name}. Error: {e}')
+        
+    # Создание словаря с соответствием Название секции : Содержимое соответствующего JSON
+    configs = dict(zip([os.path.splitext(file)[0] for file in files], files_content))
+    
+    return configs 
 
 
 # Главный эндпоинт Configurator
@@ -65,27 +88,21 @@ async def get_markets(
     # 3. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
     # 4. Получение markets - это торговые пары, их ограничения и т.п. Составляются из all_markets
     # 5. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
-    # 6. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
-    # 7. Составление объекта MarketsResponse - он будет отправлен клиенту
-    try:
+    # 6. Получение ассетов для построения маршрутов (чтение из файла)
+    # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
+    # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
+    try: 
         # Путь до файлов с конфигурацией
-        path_to_sections = f'{path_to_configs}/{exchange_id}/{instance}/sections/'
-        
-        # Получение списка файлов в папке с конфигами (нужно для названий секций)
-        files = os.listdir(path_to_sections)
-
-        # 1. Чтение файлов для получения конфигурации
-        sections_content = [json.load(open(path_to_sections + file)) for 
-                           file in files]
-        
-        # Создание словаря с соответствием Название секции : Содержимое соответствующего JSON
-        sections = dict(zip([os.path.splitext(file)[0] for file in files], sections_content))
+        path_to_current_configs = f'{path_to_configs_folder}/{exchange_id}/{instance}/sections/'
+     
+        # 1. Получение конфигурации для данного торгового сервеа
+        configs = get_configs(path_to_current_configs)
 
         # Получение времени последнего обновления конфигов
-        configs_last_update_time = os.path.getmtime(path_to_sections + '../')
+        configs_last_update_time = os.path.getmtime(path_to_current_configs + '../../')
         
 
-        # 3. Проверки, когда последний раз были обновлены конфиги
+        # 2. Проверки, когда последний раз были обновлены конфиги
         # Условие: не отдавать конфиги, если они уже были получены ранее и не обновлялись с того момента.
         # Получаю, обновлялись ли конфиги с прошлого момента запроса (если это первый запрос, то True)
         is_configs_updated = configs_update_time_dict.get(exchange_id + instance, 0) < configs_last_update_time
@@ -106,18 +123,24 @@ async def get_markets(
         markets = await format_markets(all_markets, exchange.precisionMode == ccxt.DECIMAL_PLACES)
         # 5. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
         assets_labels = await format_assets_labels(all_markets)
-        # 6. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
+        
+        # 6. Получение ассетов для построения маршрутов (чтение из файла)
+        route_assets = []
+        with open(f'{path_to_configs_folder}/{exchange_id}/{instance}/assets.txt') as assets:
+            route_assets = assets.read().replace('\n', '').split(', ')
+        # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
+
         routes = construct_routes(markets, route_assets)
         
         logger.info(f'Собраны все данные.')
-        # 7. Составление объекта MarketsResponse - он будет отправлен клиенту
+        # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
         response = MarketsResponse(
             is_new=is_configs_updated,
             data=MarketsResponseData(
                 markets=markets,
                 assets_labels=assets_labels,
                 routes=routes,
-                sections=sections
+                configs=configs
             )
         )
 
