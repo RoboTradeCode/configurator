@@ -17,7 +17,7 @@ import pydantic
 
 from src.market_data_obtaining.markets import get_exchange_by_id, format_markets, format_assets_labels
 from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, ConfigDecodeError, CCXTError, UnexpectedError
-from src.responses_models.api_responses import MarketsResponseData, MarketsResponse
+from src.responses_models.api_responses import ConfigsResponse, ConfigsResponseData
 from src.market_data_obtaining.routes import construct_routes
 from src.settings import PATH_TO_CONFIGS_FOLDER, LOGGING_CONFIG
 
@@ -60,6 +60,10 @@ def get_configs(path_to_configs: str) -> dict:
     
     return configs 
 
+# Функция для получения текущего timestamp в микросекундах
+# return int - timestamp в микросекундах
+def get_micro_timestamp() -> int:
+    return round(time.time() * 1000000)
 
 # Главный эндпоинт Configurator
 # Возвращает данные, включая: список маркетов, ассетов, торговых маршрутов, конфигураций gate и core
@@ -67,11 +71,11 @@ def get_configs(path_to_configs: str) -> dict:
 # Вовзращает данные, только если они ещё не были получены (т.е., если ещё не было запроса на эти "биржа/инстанс") или
 # если они обновились с момента последнего запроса.
 # Чтобы получить данные вне зависимости от предыдущего условия, нужно указать параметр запроса ?only_update=False
-@app.get('/{exchange_id}/{instance}', response_model=MarketsResponse)
+@app.get('/{exchange_id}/{instance}', response_model=ConfigsResponse)
 async def get_markets(
         exchange_id: str,
         instance: str,
-        only_new: bool | None = True) -> MarketsResponse | fastapi.responses.JSONResponse:
+        only_new: bool | None = True) -> ConfigsResponse:
     logger.info(f'Получен новый запрос на endpoint /{exchange_id}/{instance}')
 
     # Попытка получить биржу по её названию (название должно соответствовать ccxt)
@@ -111,8 +115,12 @@ async def get_markets(
             configs_update_time_dict[exchange_id + instance] = configs_last_update_time
         # Если запрос требует только обновленные данные, то возвращаю ответ, что новых данных нет.
         elif only_new:
-            return fastapi.responses.JSONResponse(status_code=200, content={'is_new': False})
-
+            return ConfigsResponse(
+                exchange=exchange_id,
+                instance=instance,
+                message='There is no fresh configs.',
+                timestamp=get_micro_timestamp()
+            )
         logger.info(f'Конфиги для /{exchange_id}/{instance} загружены.')
 
         # 3. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
@@ -134,16 +142,19 @@ async def get_markets(
         
         logger.info(f'Собраны все данные.')
         # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
-        response = MarketsResponse(
-            is_new=is_configs_updated,
-            data=MarketsResponseData(
+        response = ConfigsResponse(
+            exchange=exchange_id,
+            instance=instance,
+            action='send_full_config',
+            timestamp=get_micro_timestamp(),
+            data=ConfigsResponseData(
                 markets=markets,
                 assets_labels=assets_labels,
                 routes=routes,
                 configs=configs
             )
         )
-
+        logger.info(instance)
         logger.info(f"Запрос к /{exchange_id}/{instance} обработан.")
         # Возвращаем ответ (то есть отправляем клиенту, который делал запрос к API)
         return response
@@ -157,8 +168,8 @@ async def get_markets(
         logger.warning(f"Ошибка внутри файлов конфигурации для /{exchange_id}/{instance}.")
         raise ConfigDecodeError(exchange_id, instance)
     # Ошибка декодирования JSON - несоответствие формата конфигурации (отсутствуют поля / неправильный тип)
-    except pydantic.error_wrappers.ValidationError:
-        logger.warning(f"Ошибка внутри файлов конфигурации для /{exchange_id}/{instance}.")
+    except pydantic.error_wrappers.ValidationError as e:
+        logger.warning(f"Ошибка внутри файлов конфигурации для /{exchange_id}/{instance}. Error: {e}")
         raise ConfigDecodeError(exchange_id, instance)
     # Ошибки, связанные с ccxt - эта библиотека делает запрос к бирже для получения списка markets
     except ccxt.errors.BaseError as e:
