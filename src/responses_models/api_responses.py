@@ -25,9 +25,7 @@ class MarketsResponseData(BaseModel):
     markets: list[Market]
     assets_labels: list[AssetLabel]
     routes: list[list[RouteStep]]
-    gate_config: dict
-    core_config: dict
-
+    sections: dict
 
 class MarketsResponse(BaseModel):
     is_new: bool

@@ -18,8 +18,6 @@ import pydantic
 from src.market_data_obtaining.markets import get_exchange_by_id, format_markets, format_assets_labels
 from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, ConfigDecodeError, CCXTError, UnexpectedError
 from src.responses_models.api_responses import MarketsResponseData, MarketsResponse
-from src.responses_models.core_config import CoreConfig
-from src.responses_models.gate_config import GateConfig
 from src.market_data_obtaining.routes import construct_routes
 from src.settings import ROUTE_ASSETS, PATH_TO_CONFIGS, LOGGING_CONFIG
 
@@ -62,34 +60,28 @@ async def get_markets(
         raise ExchangeNotFound(exchange_id)
 
     # Удалось получить биржу, буду собирать данные, чтобы отправить JSON. Алгоритм загрузки данных:
-    # 1. gate_config - конфигурация шлюза, по сути, просто читаем JSON из папки
-    # 2. core_config - конфигурация ядра, по сути, просто читаем JSON из папки
-    # 3. Проверка, были ли получены данные ранее, и обновлялись ли они с тех пор
-    # 4. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
-    # 5. Получение markets - это торговые пары, их ограничения и т.п. Составляются из all_markets
-    # 6. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
-    # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
-    # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
+    # 1. Получение sections - чтение файлов JSON из соответствующей папки
+    # 2. Проверка, были ли получены данные ранее, и обновлялись ли они с тех пор
+    # 3. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
+    # 4. Получение markets - это торговые пары, их ограничения и т.п. Составляются из all_markets
+    # 5. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
+    # 6. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
+    # 7. Составление объекта MarketsResponse - он будет отправлен клиенту
     try:
-#        # 1. gate_config - конфигурация шлюза, по сути, просто читаем JSON из папки
-#        gate_config = GateConfig(
-#            **json.load(open(f'{path_to_configs}/{exchange_id}/{instance}/gate_config.json'))
-#        )
-#        # 2. core_config - конфигурация ядра, по сути, просто читаем JSON из папки
-#        core_config = CoreConfig(
-#            **json.load(open(f'{path_to_configs}/{exchange_id}/{instance}/core_config.json'))
-#        )
-#
+        # Путь до файлов с конфигурацией
         path_to_sections = f'{path_to_configs}/{exchange_id}/{instance}/sections/'
-
-        sections_names = [os.path.splitext(section_name)[0] 
-                for section_name in os.listdir(path_to_sections)]
         
-        sections_content = [json.load(open(path_to_sections + section_name)) for 
-                section_name in sectins_names]
+        # Получение списка файлов в папке с конфигами (нужно для названий секций)
+        files = os.listdir(path_to_sections)
 
-        sections = dict(zip(sections_names, sections_content))
+        # 1. Чтение файлов для получения конфигурации
+        sections_content = [json.load(open(path_to_sections + file)) for 
+                           file in files]
+        
+        # Создание словаря с соответствием Название секции : Содержимое соответствующего JSON
+        sections = dict(zip([os.path.splitext(file)[0] for file in files], sections_content))
 
+        # Получение времени последнего обновления конфигов
         configs_last_update_time = os.path.getmtime(path_to_sections + '../')
         
 
@@ -106,26 +98,26 @@ async def get_markets(
 
         logger.info(f'Конфиги для /{exchange_id}/{instance} загружены.')
 
-        # 4. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
+        # 3. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
         all_markets: ccxt.Exchange.markets = exchange.load_markets()
         logger.info(f'Данные о бирже {exchange_id} загружены.')
 
-        # 5. Получение markets - это ассеты, из ограничения и т.п. Составляются из all_markets
+        # 4. Получение markets - это ассеты, из ограничения и т.п. Составляются из all_markets
         markets = await format_markets(all_markets, exchange.precisionMode == ccxt.DECIMAL_PLACES)
-        # 6. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
+        # 5. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
         assets_labels = await format_assets_labels(all_markets)
-        # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
+        # 6. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
         routes = construct_routes(markets, route_assets)
-
-        # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
+        
+        logger.info(f'Собраны все данные.')
+        # 7. Составление объекта MarketsResponse - он будет отправлен клиенту
         response = MarketsResponse(
             is_new=is_configs_updated,
             data=MarketsResponseData(
                 markets=markets,
                 assets_labels=assets_labels,
                 routes=routes,
-                gate_config=gate_config,
-                core_config=core_config
+                sections=sections
             )
         )
 
