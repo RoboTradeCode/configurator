@@ -43,11 +43,11 @@ def get_json_from_dir(path_to_dir: str) -> dict:
         try:
             current_file_content: dict = json.load(open(f'{path_to_dir}{file_name}'))
             # Проверка на пустоту (пустой dict интерпретируется как false)
-            if current_file_content:
-                logger.error(f'Файл {file_name} пустой.')
+            if not current_file_content:
+                logger.error(f'Файл {path_to_dir}{file_name} пустой.')
             files_content.append(current_file_content)
         except Exception as e:
-            logger.error(f'Не удалось прочитать {file_name}. Error: {e}')
+            logger.error(f'Не удалось прочитать {path_to_dir}{file_name}. Error: {e}')
 
     # Создание словаря с соответствием [Имя_файла : Содержимое_файла]
     configs = dict(zip([os.path.splitext(file)[0] for file in files], files_content))
