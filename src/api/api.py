@@ -5,28 +5,25 @@
 \data 2022.03.12
 \version 1.1.3.1
 """
-import asyncio
 import json
-import logging
-import os.path
-import time
 
 import ccxt
 import fastapi
 import pydantic
 
+from src.api.utils import get_dir_last_change_time, get_json_from_dir, get_micro_timestamp
 from src.market_data_obtaining.markets import get_exchange_by_id, format_markets, format_assets_labels
 from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, ConfigDecodeError, CCXTError, UnexpectedError
 from src.responses_models.api_responses import ConfigsResponse, ConfigsResponseData
 from src.market_data_obtaining.routes import construct_routes
-from src.settings import PATH_TO_CONFIGS_FOLDER, LOGGING_CONFIG
+from src.settings import PATH_TO_CONFIGS_FOLDER
+from src.api.logger import logger
 
 # Конфигурация API
 path_to_configs_folder = PATH_TO_CONFIGS_FOLDER
 
-logging.config.dictConfig(LOGGING_CONFIG)
-logger = logging.getLogger(__name__)
 
+# Создание приложения fastapi
 app = fastapi.FastAPI()
 
 # словарь для хранения времени последнего обновления конфигурации core и gate
@@ -36,46 +33,24 @@ app = fastapi.FastAPI()
 # Значение в словаре обновляется при каждом запросе этих конфигов
 configs_update_time_dict: dict[str, float] = {}
 
-# Функци для получния конфигурации по торговому серверу
-# path_to_configs: str - путь до конфига (абсолютный или относительный
-# return dict - словарь с соответствием Имя_файла_конфига : Содержимое_файла
-def get_configs(path_to_configs: str) -> dict:
-    # Получение списка файлов в папке с конфигами (нужно для названий секций)
-    files: list = os.listdir(path_to_configs)
 
-    # Чтение файлов для получения конфигурации
-    files_content: lsit = []
-    for file_name in files:
-        try: 
-            current_file_content: dict = json.load(open(f'{path_to_configs}{file_name}'))
-            # Проверка на пустоту (пустой dict интерпретируется как false) 
-            if current_file_content:
-                logger.error(f'Файл конфигурации {file_name} пустой.')
-            files_content.append(current_file_content)
-        except Exception as e: 
-            logger.error(f'Не удалось получить конфигурацию {file_name}. Error: {e}')
-        
-    # Создание словаря с соответствием Название секции : Содержимое соответствующего JSON
-    configs = dict(zip([os.path.splitext(file)[0] for file in files], files_content))
-    
-    return configs 
-
-# Функция для получения текущего timestamp в микросекундах
-# return int - timestamp в микросекундах
-def get_micro_timestamp() -> int:
-    return round(time.time() * 1000000)
-
-# Главный эндпоинт Configurator
-# Возвращает данные, включая: список маркетов, ассетов, торговых маршрутов, конфигураций gate и core
-# Для доступа к эндпоинту нужно указать название биржи и инстанс. Они соответствуют папкам конфигурации
-# Вовзращает данные, только если они ещё не были получены (т.е., если ещё не было запроса на эти "биржа/инстанс") или
-# если они обновились с момента последнего запроса.
-# Чтобы получить данные вне зависимости от предыдущего условия, нужно указать параметр запроса ?only_update=False
 @app.get('/{exchange_id}/{instance}', response_model=ConfigsResponse)
 async def get_markets(
         exchange_id: str,
         instance: str,
         only_new: bool | None = True) -> ConfigsResponse:
+    """ Главный эндпоинт Configurator.
+        Возвращает данные, включая: список маркетов, ассетов, торговых маршрутов, конфигураций gate и core
+        Для доступа к эндпоинту нужно указать название биржи и инстанс. Они соответствуют папкам конфигурации.
+        Возвращает данные, только если они ещё не были получены (т.е., если ещё не было запроса на эти "биржа/инстанс") или
+        если они обновились с момента последнего запроса.
+        Чтобы получить данные вне зависимости от предыдущего условия, нужно указать параметр запроса ?only_update=False
+
+    :param exchange_id: название биржи (по ccxt).
+    :param instance: название инстанса торгового сервера.
+    :param only_new: по умолчанию True. Если True, возвращает данные только если есть изменения с последнего запроса.
+    :return: ConfigsResponse - структура с конфигурацией для торгового сервера.
+    """
     logger.info(f'Получен новый запрос на endpoint /{exchange_id}/{instance}')
 
     # Попытка получить биржу по её названию (название должно соответствовать ccxt)
@@ -95,18 +70,20 @@ async def get_markets(
     # 6. Получение ассетов для построения маршрутов (чтение из файла)
     # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
     # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
-    try: 
-        # Путь до файлов с конфигурацией
-        path_to_current_configs = f'{path_to_configs_folder}/{exchange_id}/{instance}/sections/'
+    try:
      
-        # 1. Получение конфигурации для данного торгового сервеа
-        configs = get_configs(path_to_current_configs)
+        # 1. Получение конфигурации для данного торгового сервера
+        configs = get_json_from_dir(f'{path_to_configs_folder}/{exchange_id}/{instance}/sections/')
 
         # Получение времени последнего обновления конфигов
-        configs_last_update_time = os.path.getmtime(path_to_current_configs + '../../')
-        
+        configs_last_update_time = get_dir_last_change_time(f'{path_to_configs_folder}/{exchange_id}/{instance}')
 
-        # 2. Проверки, когда последний раз были обновлены конфиги
+        # 2. Получение ассетов для построения маршрутов (чтение из файла)
+        route_assets = []
+        with open(f'{path_to_configs_folder}/{exchange_id}/{instance}/assets.txt') as assets:
+            route_assets = assets.read().replace('\n', '').split(', ')
+
+        # 3. Проверки, когда последний раз были обновлены конфиги
         # Условие: не отдавать конфиги, если они уже были получены ранее и не обновлялись с того момента.
         # Получаю, обновлялись ли конфиги с прошлого момента запроса (если это первый запрос, то True)
         is_configs_updated = configs_update_time_dict.get(exchange_id + instance, 0) < configs_last_update_time
@@ -123,19 +100,15 @@ async def get_markets(
             )
         logger.info(f'Конфиги для /{exchange_id}/{instance} загружены.')
 
-        # 3. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
+        # 4. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
         all_markets: ccxt.Exchange.markets = exchange.load_markets()
         logger.info(f'Данные о бирже {exchange_id} загружены.')
 
-        # 4. Получение markets - это ассеты, из ограничения и т.п. Составляются из all_markets
+        # 5. Получение markets - это ассеты, из ограничения и т.п. Составляются из all_markets
         markets = await format_markets(all_markets, exchange.precisionMode == ccxt.DECIMAL_PLACES)
-        # 5. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
+        # 60. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
         assets_labels = await format_assets_labels(all_markets)
-        
-        # 6. Получение ассетов для построения маршрутов (чтение из файла)
-        route_assets = []
-        with open(f'{path_to_configs_folder}/{exchange_id}/{instance}/assets.txt') as assets:
-            route_assets = assets.read().replace('\n', '').split(', ')
+
         # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
 
         routes = construct_routes(markets, route_assets)
@@ -181,11 +154,11 @@ async def get_markets(
         raise UnexpectedError(exchange_id, e)
 
 
-# Эндпоинт для пинга
-# Возвращает тело запроса с полем {"pong": true}
 @app.get('/ping')
 async def get_ping():
+    """ Эндпоинт для пинга API
+
+    :return: Возвращает тело запроса с полем {"pong": true}
+    """
     return {"pong": True}
 
-if __name__ == "__main__":
-    asyncio.run(get_markets('kucoin', '1'))
