@@ -5,8 +5,8 @@
 \data 2022.03.12
 \version 1.0.1
 """
-ROUTE_ASSETS = ['BTC', 'ETH', 'USDT']
-PATH_TO_CONFIGS = './configs'
+
+PATH_TO_CONFIGS_FOLDER = './configs'
 
 ERROR_LOG_FILENAME = ".configurator-errors.log"
 

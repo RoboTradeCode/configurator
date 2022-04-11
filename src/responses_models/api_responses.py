@@ -6,7 +6,9 @@
 \data 2022.03.12
 \version 1.0.1
 """
-from pydantic import BaseModel
+from typing import Optional
+
+from pydantic import BaseModel, Field
 
 from src.responses_models.market_models import AssetLabel, Market
 
@@ -20,16 +22,28 @@ class RouteStep(BaseModel):
     common_symbol: str
     operation: str
 
+class BaseResponseFormat(BaseModel):
+    event: Optional[str]
+    exchange: Optional[str]
+    node : Optional[str]
+    instance: Optional[str]
+    action: Optional[str]
+    message: Optional[str]
+    algo: Optional[str]
+    timestamp: Optional[int]
+    
 
-class MarketsResponseData(BaseModel):
+class ConfigsResponseData(BaseModel):
     markets: list[Market]
     assets_labels: list[AssetLabel]
     routes: list[list[RouteStep]]
-    gate_config: dict
-    core_config: dict
+    configs: dict
+
+class ConfigsResponse(BaseResponseFormat):
+    event = 'config'
+    node = 'configurator'
+    algo = 'spread_bot_cpp'
+    data: Optional[ConfigsResponseData]
 
 
-class MarketsResponse(BaseModel):
-    is_new: bool
-    data: MarketsResponseData
 
