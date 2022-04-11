@@ -63,11 +63,11 @@ async def get_markets(
 
     # Удалось получить биржу, буду собирать данные, чтобы отправить JSON. Алгоритм загрузки данных:
     # 1. Получение sections - чтение файлов JSON из соответствующей папки
-    # 2. Проверка, были ли получены данные ранее, и обновлялись ли они с тех пор
-    # 3. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
-    # 4. Получение markets - это торговые пары, их ограничения и т.п. Составляются из all_markets
-    # 5. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
-    # 6. Получение ассетов для построения маршрутов (чтение из файла)
+    # 2. Получение ассетов для построения маршрутов (чтение из файла)
+    # 3. Проверка, были ли получены данные ранее, и обновлялись ли они с тех пор
+    # 4. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
+    # 5. Получение markets - это торговые пары, их ограничения и т.п. Составляются из all_markets
+    # 6. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
     # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
     # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
     try:
@@ -79,9 +79,9 @@ async def get_markets(
         configs_last_update_time = get_dir_last_change_time(f'{path_to_configs_folder}/{exchange_id}/{instance}')
 
         # 2. Получение ассетов для построения маршрутов (чтение из файла)
-        route_assets = []
+        traded_assets = []
         with open(f'{path_to_configs_folder}/{exchange_id}/{instance}/assets.txt') as assets:
-            route_assets = assets.read().replace('\n', '').split(', ')
+            traded_assets = assets.read().replace('\n', '').split(', ')
 
         # 3. Проверки, когда последний раз были обновлены конфиги
         # Условие: не отдавать конфиги, если они уже были получены ранее и не обновлялись с того момента.
@@ -105,13 +105,13 @@ async def get_markets(
         logger.info(f'Данные о бирже {exchange_id} загружены.')
 
         # 5. Получение markets - это ассеты, из ограничения и т.п. Составляются из all_markets
-        markets = await format_markets(all_markets, exchange.precisionMode == ccxt.DECIMAL_PLACES)
-        # 60. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
-        assets_labels = await format_assets_labels(all_markets)
+        markets = await format_markets(all_markets, exchange.precisionMode == ccxt.DECIMAL_PLACES, traded_assets)
+        # 6. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
+        assets_labels = await format_assets_labels(all_markets, traded_assets)
 
         # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
 
-        routes = construct_routes(markets, route_assets)
+        routes = construct_routes(markets, traded_assets)
         
         logger.info(f'Собраны все данные.')
         # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
