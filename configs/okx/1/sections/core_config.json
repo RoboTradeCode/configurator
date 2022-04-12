@@ -1,6 +1,9 @@
 {
+	 "cross_3t_php": {
+    "deal_amount": "232323"
+  },
   "exchange": {
-    "btc_threshold": "0.0008",
+    "btc_threshold": "232323",
     "buy_ratio": "0.9985",
     "lower_bound_ratio": "0.9995",
     "sell_ratio": "1.0015",
@@ -14,7 +17,7 @@
         "stream_id": 1003
       },
       "metrics": {
-        "channel": "aeron:udp?endpoint=3.66.183.27:44444",
+        "channel": "1111aeron:udp?endpoint=3.66.183.27:44444",
         "stream_id": 1001
       },
       "log": {

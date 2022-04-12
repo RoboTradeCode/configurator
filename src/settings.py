@@ -1,12 +1,12 @@
 """
 \file settings.py
 \author github:khanbekov, telegram:qoddrysdaim
-\brief В файле находятся настройки программы
+\brief В файле находятся настройки Configurator
 \data 2022.03.12
-\version 1.0.1
+\version 1.2.1
 """
-ROUTE_ASSETS = ['BTC', 'ETH', 'USDT']
-PATH_TO_CONFIGS = './configs'
+
+PATH_TO_CONFIGS_FOLDER = './configs'
 
 ERROR_LOG_FILENAME = ".configurator-errors.log"
 
@@ -36,6 +36,13 @@ LOGGING_CONFIG = {
             "formatter": "default",
             "stream": "ext://sys.stdout",
         },
+        "aeron": {
+            "()": "src.logger.aeron_handler.AeronHandler",
+            "level": "WARNING",
+            "channel": "aeron:ipc",
+            "stream_id": 1004,
+            "formatter": "default",
+        },
     },
     "loggers": {
         "configurator": {
@@ -45,5 +52,5 @@ LOGGING_CONFIG = {
             ],
         },
     },
-    "root": {"level": "INFO", "handlers": ["logfile", "stdout"]},
+    "root": {"level": "INFO", "handlers": ["logfile", "stdout", "aeron"]},
 }
