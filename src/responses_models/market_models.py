@@ -3,7 +3,7 @@
 \author github:khanbekov, telegram:qoddrysdaim
 \brief В файле находится классы для хранения информации о маркетах и ассетах (их возвращает API)
 \data 2022.03.12
-\version 1.0.1
+\version 1.2.1
 """
 from pydantic import BaseModel
 

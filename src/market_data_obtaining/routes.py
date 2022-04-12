@@ -3,7 +3,7 @@
 \author github:khanbekov, telegram:qoddrysdaim
 \brief В файле находятся функции для построение торговых маршрутов
 \data 2022.03.12
-\version 1.1.3.1
+\version 1.2.1
 """
 import itertools
 from pprint import pprint

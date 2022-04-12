@@ -3,7 +3,7 @@
 \author github:khanbekov, telegram:qoddrysdaim
 \brief В файле находятся классы исключений, которые может возвращать API
 \data 2022.03.12
-\version 1.0.1
+\version 1.2.1
 """
 import fastapi
 

@@ -1,9 +1,9 @@
 """
 \file settings.py
 \author github:khanbekov, telegram:qoddrysdaim
-\brief В файле находятся настройки программы
+\brief В файле находятся настройки Configurator
 \data 2022.03.12
-\version 1.0.1
+\version 1.2.1
 """
 
 PATH_TO_CONFIGS_FOLDER = './configs'

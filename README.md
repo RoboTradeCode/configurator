@@ -1,5 +1,5 @@
 # Configurator
-## Версия 1.1.3.1
+## Версия 1.2.1 
 
 [![Python](https://img.shields.io/badge/python-3.10.2-blue)](https://www.python.org/downloads/)
 [![Linux](https://img.shields.io/badge/platform-linux-lightgrey)](https://ru.wikipedia.org/wiki/Linux)

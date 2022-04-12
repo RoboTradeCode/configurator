@@ -3,7 +3,7 @@
 \author github:khanbekov, telegram:qoddrysdaim
 \brief В файле загружается конфигурация API, логгирования, создается инициализируется API и его эндпоинты
 \data 2022.03.12
-\version 1.1.3.1
+\version 1.2.1
 """
 import json
 
