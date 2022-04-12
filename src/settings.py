@@ -1,56 +1,17 @@
 """
 \file settings.py
 \author github:khanbekov, telegram:qoddrysdaim
-\brief В файле находятся настройки Configurator
+\brief Файл загружает настройки Configurator
 \data 2022.03.12
 \version 1.2.1
 """
+import tomli
 
-PATH_TO_CONFIGS_FOLDER = './configs'
+CONFIG_PATH = 'config.toml'
 
-ERROR_LOG_FILENAME = ".configurator-errors.log"
+with open(CONFIG_PATH, "rb") as f:
+    toml_dict = tomli.load(f)
 
-LOGGING_CONFIG = {
-    "version": 1,
-    "disable_existing_loggers": False,
-    "formatters": {
-        "default": {
-            "format": "%(asctime)s:%(name)s:%(process)d:%(lineno)d " "%(levelname)s %(message)s",
-            "datefmt": "%Y-%m-%d %H:%M:%S",
-        },
-        "simple": {
-            "format": "%(message)s",
-        },
-    },
-    "handlers": {
-        "logfile": {
-            "class": "logging.handlers.RotatingFileHandler",
-            "level": "WARNING",
-            "filename": ERROR_LOG_FILENAME,
-            "formatter": "default",
-            "backupCount": 2,
-        },
-        "stdout": {
-            "class": "logging.StreamHandler",
-            "level": "DEBUG",
-            "formatter": "default",
-            "stream": "ext://sys.stdout",
-        },
-        "aeron": {
-            "()": "src.logger.aeron_handler.AeronHandler",
-            "level": "WARNING",
-            "channel": "aeron:ipc",
-            "stream_id": 1004,
-            "formatter": "default",
-        },
-    },
-    "loggers": {
-        "configurator": {
-            "level": "INFO",
-            "handlers": [
-                "stdout",
-            ],
-        },
-    },
-    "root": {"level": "INFO", "handlers": ["logfile", "stdout", "aeron"]},
-}
+PATH_TO_CONFIGS_FOLDER = toml_dict['data']['path_to_configs_folder']
+
+LOGGING_CONFIG = toml_dict['logging']
