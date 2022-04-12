@@ -1,0 +1,51 @@
+[data]
+#   путь к папке, где находятся конфигурации для торговых серверов
+    path_to_configs_folder = './configs'
+
+[logging]
+
+    version = 1
+#   отключить логгеры других приложений. В случае Configurator - отключить логгер uvicorn (не рекомендуется)
+    disable_existing_loggers = false
+
+    [logging.formatters]
+        [logging.formatters.default]
+            format = "%(asctime)s:%(name)s:%(process)d:%(lineno)d %(levelname)s %(message)s"
+            datefmt = "%Y-%m-%d %H:%M:%S"
+
+        [logging.formatters.simple]
+            format = "%(message)s"
+    [logging.handlers]
+
+        [logging.handlers.stdout]
+            class = "logging.StreamHandler"
+            level = "DEBUG"
+            formatter = "default"
+            stream = "ext://sys.stdout"
+
+#       параметры обработчика для публикации логов в Aeron
+        [logging.handlers.aeron]
+            "()" = "src.logger.aeron_handler.AeronHandler"
+#           уровень отправления логов (выше этого уровня включительно)
+            level = "WARNING"
+#           канал для публикации логов
+            channel = "aeron:ipc"
+#           id потока для публикации логов
+            stream_id = 1004
+#           указать форматтер для сообщений
+            formatter = "default"
+
+        [logging.handlers.logfile]
+            class = "logging.handlers.RotatingFileHandler"
+            level = "WARNING"
+#           файл, в который будут сохраняться логи
+            filename = ".configurator-errors.log"
+            formatter = "default"
+            backupCount = 2
+
+
+    [logging.root]
+        level = "INFO"
+        handlers = ["logfile", "stdout", "aeron"]
+
+
