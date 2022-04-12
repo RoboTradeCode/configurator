@@ -1,7 +1,7 @@
 {
   "exchange": {
     "name": "binance",
-    "instance": cross_3t_php
+    "instance": "cross_3t_php"
   },
   "account": {
     "api_key": "61d213fc48bacd88816474cc",

@@ -17,7 +17,7 @@ from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, C
 from src.responses_models.api_responses import ConfigsResponse, ConfigsResponseData
 from src.market_data_obtaining.routes import construct_routes
 from src.settings import PATH_TO_CONFIGS_FOLDER
-from src.api.logger import logger
+from src.logger.logger import logger
 
 # Конфигурация API
 path_to_configs_folder = PATH_TO_CONFIGS_FOLDER

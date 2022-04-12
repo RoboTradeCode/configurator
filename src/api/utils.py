@@ -2,7 +2,7 @@ import json
 import os
 import time
 
-from src.api.logger import logger
+from src.logger.logger import logger
 
 
 def get_dir_last_change_time(dir_name: str) -> float:

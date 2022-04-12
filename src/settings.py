@@ -36,6 +36,13 @@ LOGGING_CONFIG = {
             "formatter": "default",
             "stream": "ext://sys.stdout",
         },
+        "aeron": {
+            "()": "src.logger.aeron_handler.AeronHandler",
+            "level": "WARNING",
+            "channel": "aeron:ipc",
+            "stream_id": 1004,
+            "formatter": "default",
+        },
     },
     "loggers": {
         "configurator": {
@@ -45,5 +52,5 @@ LOGGING_CONFIG = {
             ],
         },
     },
-    "root": {"level": "INFO", "handlers": ["logfile", "stdout"]},
+    "root": {"level": "INFO", "handlers": ["logfile", "stdout", "aeron"]},
 }
