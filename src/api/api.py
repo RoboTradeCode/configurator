@@ -71,9 +71,10 @@ async def get_markets(
     # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
     # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
     try:
-     
         # 1. Получение конфигурации для данного торгового сервера
         configs = get_json_from_dir(f'{path_to_configs_folder}/{exchange_id}/{instance}/sections/')
+
+        logger.info(f'Файлы из папки {path_to_configs_folder}/{exchange_id}/{instance}/sections/ загружены.')
 
         # Получение времени последнего обновления конфигов
         configs_last_update_time = get_dir_last_change_time(f'{path_to_configs_folder}/{exchange_id}/{instance}')
@@ -83,13 +84,17 @@ async def get_markets(
         with open(f'{path_to_configs_folder}/{exchange_id}/{instance}/assets.txt') as assets:
             traded_assets = assets.read().replace('\n', '').split(', ')
 
+        logger.info(f'Загружены ассеты из {path_to_configs_folder}/{exchange_id}/{instance}/assets.txt.')
+
         # 3. Проверки, когда последний раз были обновлены конфиги
         # Условие: не отдавать конфиги, если они уже были получены ранее и не обновлялись с того момента.
         # Получаю, обновлялись ли конфиги с прошлого момента запроса (если это первый запрос, то True)
         is_configs_updated = configs_update_time_dict.get(exchange_id + instance, 0) < configs_last_update_time
+
         if is_configs_updated:
             # записываю время последнего обновления
             configs_update_time_dict[exchange_id + instance] = configs_last_update_time
+
         # Если запрос требует только обновленные данные, то возвращаю ответ, что новых данных нет.
         elif only_new:
             return ConfigsResponse(
@@ -98,21 +103,23 @@ async def get_markets(
                 message='There is no fresh configs.',
                 timestamp=get_micro_timestamp()
             )
-        logger.info(f'Конфиги для /{exchange_id}/{instance} загружены.')
 
         # 4. Загрузка all_markets - это все ассеты биржи. Не записывается в JSON, нужно для составления других полей
         all_markets: ccxt.Exchange.markets = exchange.load_markets()
-        logger.info(f'Данные о бирже {exchange_id} загружены.')
+
+        logger.info(f'Загружены данные о бирже {exchange_id}.')
 
         # 5. Получение markets - это ассеты, из ограничения и т.п. Составляются из all_markets
         markets = await format_markets(all_markets, exchange.precisionMode == ccxt.DECIMAL_PLACES, traded_assets)
+
         # 6. Получение assets_labels - список из стандартных названий ассетов (ccxt) и названий на бирже
         assets_labels = await format_assets_labels(all_markets, traded_assets)
 
         # 7. Составление routes - списки маршрутов, образуются из списка markets по заданным ассетам
-
         routes = construct_routes(markets, traded_assets)
         
+        logger.info(f'Данные о бирже форматированы и построены торговые маршруты.')
+
         logger.info(f'Собраны все данные.')
         # 8. Составление объекта MarketsResponse - он будет отправлен клиенту
         response = ConfigsResponse(
@@ -127,7 +134,6 @@ async def get_markets(
                 configs=configs
             )
         )
-        logger.info(instance)
         logger.info(f"Запрос к /{exchange_id}/{instance} обработан.")
         # Возвращаем ответ (то есть отправляем клиенту, который делал запрос к API)
         return response
@@ -138,11 +144,11 @@ async def get_markets(
         raise ConfigsNotFound(exchange_id, instance)
     # Ошибка декодирования JSON - синтаксические ошибки внутри JSON конфигурации
     except json.decoder.JSONDecodeError:
-        logger.warning(f"Ошибка внутри файлов конфигурации для /{exchange_id}/{instance}.")
+        logger.warning(f"Ошибка при декодировании JSON для /{exchange_id}/{instance}.")
         raise ConfigDecodeError(exchange_id, instance)
     # Ошибка декодирования JSON - несоответствие формата конфигурации (отсутствуют поля / неправильный тип)
     except pydantic.error_wrappers.ValidationError as e:
-        logger.warning(f"Ошибка внутри файлов конфигурации для /{exchange_id}/{instance}. Error: {e}")
+        logger.warning(f"Ошибка при форматировании данных для /{exchange_id}/{instance}. Error: {e}")
         raise ConfigDecodeError(exchange_id, instance)
     # Ошибки, связанные с ccxt - эта библиотека делает запрос к бирже для получения списка markets
     except ccxt.errors.BaseError as e:
