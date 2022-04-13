@@ -3,7 +3,6 @@
 \author github:khanbekov, telegram:qoddrysdaim
 \brief В файле объявлен обработчик логов, отправляющий логи по Aeron
 \data 2022.04.11
-\version 1.2.1
 """
 from aeron import Publisher
 from logging import StreamHandler
