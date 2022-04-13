@@ -3,7 +3,6 @@
 \author github:khanbekov, telegram:qoddrysdaim
 \brief Точка входа Configurator
 \data 2022.03.12
-\version 1.2.1
 """
 import uvicorn
 

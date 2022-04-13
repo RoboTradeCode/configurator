@@ -3,7 +3,6 @@
 \author github:khanbekov, telegram:qoddrysdaim
 \brief В файле находится классы для хранения информации о маркетах и ассетах (их возвращает API)
 \data 2022.03.12
-\version 1.2.1
 """
 from pydantic import BaseModel
 
@@ -21,6 +20,8 @@ class AssetLabel(BaseModel):
 # common_symbol: str - универсальное название торговой пары (примеры: BTC/USDT, ETH/USDT, SHIB/BTC)
 # price_increment: float - шаг цены (примеры: 0.00001, 0.5, 0.025)
 # amount_increment: float - шаг объема (примеры: 0.00001, 0.5, 0.025)
+# min_amount: float - минимальный объем ордера
+# max_amount: float - максимальный объем ордера
 # base_asset: str - базовый актив
 # quote_asset: str - котируемый актив
 class Market(BaseModel):
@@ -28,5 +29,7 @@ class Market(BaseModel):
     common_symbol: str
     price_increment: float
     amount_increment: float
+    min_amount: float
+    max_amount: float
     base_asset: str
     quote_asset: str

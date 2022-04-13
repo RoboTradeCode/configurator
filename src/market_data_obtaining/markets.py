@@ -3,7 +3,6 @@
 \author github:khanbekov, telegram:qoddrysdaim
 \brief В файле находятся функции для получения информации от бирж
 \data 2022.03.12
-\version 1.2.1
 
 Для получения данных используется библиотека ccxt
 Для хранения структурированных данных используется библиотека pydantic
@@ -110,6 +109,8 @@ async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: b
                         if is_decimal_precision
                         else market['precision']['amount']
                     ),
+                    min_amount=market['limits']['amount']['min'],
+                    max_amount=market['limits']['amount']['max'],
                     base_asset=market['baseId'],
                     quote_asset=market['quoteId']
                 )

@@ -3,7 +3,6 @@
 \author github:khanbekov, telegram:qoddrysdaim
 \brief В файле находятся вспомогательные функции, нужные для работы API
 \data 2022.04.11
-\version 1.2.1
 """
 import json
 import os
