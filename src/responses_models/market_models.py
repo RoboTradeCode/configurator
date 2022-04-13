@@ -4,6 +4,8 @@
 \brief В файле находится классы для хранения информации о маркетах и ассетах (их возвращает API)
 \data 2022.03.12
 """
+from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -27,9 +29,9 @@ class AssetLabel(BaseModel):
 class Market(BaseModel):
     exchange_symbol: str
     common_symbol: str
-    price_increment: float
-    amount_increment: float
-    min_amount: float
-    max_amount: float
+    price_increment: Optional[float]
+    amount_increment: Optional[float]
+    min_amount: Optional[float]
+    max_amount: Optional[float]
     base_asset: str
     quote_asset: str

@@ -12,7 +12,8 @@ import pydantic
 
 from src.api.utils import get_dir_last_change_time, get_json_from_dir, get_micro_timestamp
 from src.market_data_obtaining.markets import get_exchange_by_id, format_markets, format_assets_labels
-from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, ConfigDecodeError, CCXTError, UnexpectedError
+from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, ConfigDecodeError, CCXTError, \
+    UnexpectedError, JsonDecodeError
 from src.responses_models.api_responses import ConfigsResponse, ConfigsResponseData
 from src.market_data_obtaining.routes import construct_routes
 from src.settings import PATH_TO_CONFIGS_FOLDER
@@ -144,10 +145,10 @@ async def get_markets(
     # Ошибка декодирования JSON - синтаксические ошибки внутри JSON конфигурации
     except json.decoder.JSONDecodeError:
         logger.warning(f"Ошибка при декодировании JSON для /{exchange_id}/{instance}.")
-        raise ConfigDecodeError(exchange_id, instance)
+        raise JsonDecodeError(exchange_id, instance)
     # Ошибка декодирования JSON - несоответствие формата конфигурации (отсутствуют поля / неправильный тип)
     except pydantic.error_wrappers.ValidationError as e:
-        logger.warning(f"Ошибка при форматировании данных для /{exchange_id}/{instance}. Error: {e}")
+        logger.warning(f"Ошибка при формировании данных для /{exchange_id}/{instance}. Error: {e}")
         raise ConfigDecodeError(exchange_id, instance)
     # Ошибки, связанные с ccxt - эта библиотека делает запрос к бирже для получения списка markets
     except ccxt.errors.BaseError as e:
@@ -166,4 +167,3 @@ async def get_ping():
     :return: Возвращает тело запроса с полем {"pong": true}
     """
     return {"pong": True}
-

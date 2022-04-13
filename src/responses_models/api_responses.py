@@ -24,7 +24,7 @@ class RouteStep(BaseModel):
 class BaseResponseFormat(BaseModel):
     event: Optional[str]
     exchange: Optional[str]
-    node : Optional[str]
+    node: Optional[str]
     instance: Optional[str]
     action: Optional[str]
     message: Optional[str]

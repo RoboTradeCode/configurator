@@ -37,13 +37,25 @@ class ConfigsNotFound(fastapi.HTTPException):
 # Класс исключения, проблема с чтением конфигурации core или gate.
 # Если возникло это исключение, значит проблема с форматом конфига.
 # Может быть возвращен API в качестве ответа
+class JsonDecodeError(fastapi.HTTPException):
+    def __init__(self, exchange_id: str, instance: str):
+        self.status_code = 500
+        self.detail = {
+                "title": f'Ошибка при получении данных.',
+                "detail": f'Не удалось обработать конфигурацию для «/{exchange_id}/{instance}». '
+                          f'Пожалуйста, проверьте формат конфигурации на сервере.'
+            }
+
+# Класс исключения, проблема с чтением конфигурации core или gate.
+# Если возникло это исключение, значит проблема с форматом конфига.
+# Может быть возвращен API в качестве ответа
 class ConfigDecodeError(fastapi.HTTPException):
     def __init__(self, exchange_id: str, instance: str):
         self.status_code = 500
         self.detail = {
-                "title": f'Проблема при чтении конфигурации.',
-                "detail": f'Не удалось обработать конфигурацию для «/{exchange_id}/{instance}». '
-                          f'Пожалуйста, проверьте формат конфигурации на сервере.'
+                "title": f'Ошибка при получении данных.',
+                "detail": f'Не удалось сформировать данные для '
+                          f'«/{exchange_id}/{instance}».'
             }
 
 
