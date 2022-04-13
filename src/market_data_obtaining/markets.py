@@ -110,6 +110,8 @@ async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: b
                         if is_decimal_precision
                         else market['precision']['amount']
                     ),
+                    min_amount=market['limits']['amount']['min'],
+                    max_amount=market['limits']['amount']['max'],
                     base_asset=market['baseId'],
                     quote_asset=market['quoteId']
                 )
