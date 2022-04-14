@@ -1,0 +1,6 @@
+{
+  "exchange": "binance",
+  "node": "configurator",
+  "instance": "cross_3t_php",
+  "algo": "spread_bot_cpp"
+}

@@ -1,0 +1,6 @@
+{
+  "exchange": "binance",
+  "node": "configurator",
+  "instance": "1",
+  "algo": "spread_bot_cpp"
+}
