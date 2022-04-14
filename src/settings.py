@@ -6,11 +6,11 @@
 """
 import tomli
 
-CONFIG_PATH = 'config.toml'
+API_CONFIGURATION_PATH = 'config.toml'
 
-with open(CONFIG_PATH, "rb") as f:
+with open(API_CONFIGURATION_PATH, "rb") as f:
     toml_dict = tomli.load(f)
 
-PATH_TO_CONFIGS_FOLDER = toml_dict['data']['path_to_configs_folder']
+PATH_TO_TRADE_SERVERS_CONFIGS = toml_dict['data']['path_to_trade_servers_configs']
 
 LOGGING_CONFIG = toml_dict['logging']

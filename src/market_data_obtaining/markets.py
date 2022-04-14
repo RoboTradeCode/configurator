@@ -119,6 +119,15 @@ async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: b
     return results
 
 
+def check_existence_of_exchange(exchange_id: str) -> bool:
+    """ Функция для проверки, доступна ли такая биржа в ccxt
+
+    :param exchange_id: название биржи
+    :return: True, если есть в списке ccxt. False, если нет в списке.
+    """
+    return exchange_id in ccxt.exchanges
+
+
 def get_exchange_by_id(exchange_id: str, config: dict = None) -> ccxt.Exchange:
     """Функция для получения объекта биржи ccxt по названию биржи
     Если биржу не удалось найти, возвращает None

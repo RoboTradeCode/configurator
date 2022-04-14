@@ -1,6 +1,26 @@
+[endpoint]
+    [endpoint.main]
+        event = 'config'
+        [endpoint.main.fresh]
+            action = 'test'
+            message = ''
+        [endpoint.main.no_fresh]
+            action = ''
+            message = 'There is no fresh configs'
+
+    [endpoint.ping]
+
 [data]
 #   путь к папке, где находятся конфигурации для торговых серверов
-    path_to_configs_folder = './configs'
+        path_to_trade_servers_configs = './configs'
+
+    assets_filename = 'assets.txt'
+
+    header_filename = 'header.json'
+
+    [data.default]
+        node = 'configurator'
+        algo = 'spread_bot_cpp'
 
 [logging]
 
