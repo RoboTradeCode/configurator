@@ -17,7 +17,7 @@ from src.market_data_obtaining.markets import get_exchange_by_id, check_existenc
     format_assets_labels
 from src.market_data_obtaining.routes import construct_routes
 from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, FileNotFound
-from src.responses_models.api_responses import ConfigsResponse, ConfigsResponseData
+from src.responses_models.api_responses import ConfigsResponse, ConfigsResponseData, init_response
 from src.settings import PATH_TO_TRADE_SERVERS_CONFIGS, API_CONFIGURATION_PATH
 
 # Путь до директории с конфигурациями торговых серверов
@@ -34,11 +34,11 @@ app = fastapi.FastAPI()
 configs_update_time_dict: dict[str, float] = {}
 
 
-@app.get('/{exchange_id}/{instance}', response_model=ConfigsResponse)
+@app.get('/{exchange_id}/{instance}')
 async def endpoint_get_configs(
         exchange_id: str,
         instance: str,
-        only_new: bool | None = True) -> ConfigsResponse:
+        only_new: bool | None = True):
     """ Главный эндпоинт Configurator.
         Возвращает данные, включая: список маркетов, ассетов, торговых маршрутов,
         конфигураций gate и core.
@@ -111,7 +111,7 @@ async def endpoint_get_configs(
     is_configs_updated = check_update_of_dir(path_to_config)
 
     # Все необходимые проверки пройдены, создаю объект response API
-    response: ConfigsResponse = ConfigsResponse()
+    response = init_response(f'{path_to_config}/{header_filename}', exchange_id, instance)
 
     response.event = api_configuration['endpoint']['main']['event']
     response.timestamp = get_micro_timestamp()
@@ -129,15 +129,6 @@ async def endpoint_get_configs(
         response.message = api_configuration['endpoint']['main']['no_fresh']['message']
         response.action = api_configuration['endpoint']['main']['fresh']['action']
         logger.info(f'Нет обновлений в конфигурации.')
-
-    # Заполняю остальные поля response
-    with open(f'{path_to_config}/{header_filename}', 'r') as header_file:
-        header_data = json.load(header_file)
-
-        response.exchange = header_data['exchange']
-        response.instance = header_data['instance']
-        response.node = header_data['node']
-        response.algo = header_data['algo']
 
     # Возвращаю ответ на запрос
     return response

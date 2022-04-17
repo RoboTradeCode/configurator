@@ -8,7 +8,7 @@ import json
 import os
 import time
 
-from pydantic.main import BaseModel
+from pydantic.main import BaseModel, create_model
 
 from src.logger.logger import logger
 
@@ -37,45 +37,6 @@ def check_update_of_dir(path_to_dir: str) -> bool:
         dirs_times_of_update[path_to_dir] = dir_change_time
 
     return is_configs_updated
-
-
-class BaseHeaderFile(BaseModel):
-    exchange: str
-    instance: str
-    node: str = "configurator"
-    algo: str = "spread_bot_cpp"
-    # Метод для создания потомка модели с добавлением новых полей
-    @classmethod
-    def with_fields(cls, **field_definitions):
-        return create_model('HeaderWtihFields', __base__=cls, **field_definitions)
-
-
-
-def handle_header_file(path_to_file: str, exchange_id: str, instance: str) -> BaseHeaderFile:
-    """Функция для обработки json и обертывания его полей в pydantic model.
-    Используется для обработки файлов с основными полями response Configurator API
-
-    :param path_to_file: путь к файлу json
-    :param exchange_id: название биржи. Используется, если в header не выставлено значение.
-    :param instance: название инстанса. Используется, если в header не выставлено значение.
-    :return: модель pydantic. Используется потомок BaseHeaderFile, с добавление новых полей.
-    Если в файле нет новых полей, всё равно будет использоваться потомок, но 
-    поля будут соответстваовать BaseHeaderFile.
-    """
-    # Читаю поля из файла json
-    with open(f'{path_to_file}', 'r') as header_file:
-        header_data = json.load(header_file)
-        # Создаю модель потомок BaseHeaderFile, с добавлением новых полей и выставлением в 
-        # отсутствующие поля значения по умолчанию.
-        HeaderFile = BaseHeaderFile.with_fields(exchange=exchange_id, instance=instance, 
-                **header_data)
-        header = HeaderFile(**header_data)
-    # Записываю поля в файл (нужно, чтобы добавить недостающие поля).
-    # Если в файле были поля, которых нет в BaseHeaderFile, они будут сохранены и записаны в файл
-    with open(f'{path_to_file}', 'w') as header_file:
-        json.dump(header.dict(), header_file, indent=4)
-    return header
-
 
 
 def get_dir_last_change_time(path_to_dir: str) -> float:
@@ -136,3 +97,27 @@ def get_micro_timestamp() -> int:
     :return: int - timestamp в микросекундах
     """
     return round(time.time() * 1000000)
+
+
+def check_dict_to_unexpected_fields(checking_dict: dict, expected_keys: list[str]) -> bool:
+    """ Функция для проверки, есть ли в словаре не ожидаемые ключи (ключи, которых нет в expected_keys).
+
+    :param checking_dict: словарь, который нужно проверить.
+    :param expected_keys: ожидаемые ключи.
+    :return: True, если есть хотя бы 1 не ожидаемый ключ в словаре.
+    """
+    for key in checking_dict.keys():
+        if key not in expected_keys:
+            return True
+
+
+def check_dict_to_missing_fields(checking_dict: dict, expected_keys: list[str]) -> bool:
+    """ Функция для проверки, есть ли в словаре отсутствующие ключи (ключи, которые есть в expected_keys).
+
+    :param checking_dict: словарь, который нужно проверить.
+    :param expected_keys: ожидаемые ключи.
+    :return: True, если не хватает хотя бы 1 ключа в словаре.
+    """
+    for key in expected_keys:
+        if key not in checking_dict.keys():
+            return True
