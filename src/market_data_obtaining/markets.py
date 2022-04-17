@@ -11,16 +11,7 @@
 import ccxt
 
 import src.responses_models.market_models as market_models
-
-
-def convert_precision(precision: int) -> float:
-    """Функция конвертирует int знаков после запятой в float,
-    т.е. конвертирует 3 -> 0.001, 1 -> 0.1
-
-    :param precision: int - точность, которую нужно конвертировать
-    :return: float - преобразованная точность, в виде float
-    """
-    return float('0.' + '0' * (precision - 1) + '1')
+from api.utils import handle_precision
 
 
 async def format_assets_labels(markets: ccxt.Exchange.markets, chosen_assets: list[str]) \
@@ -68,7 +59,6 @@ async def format_assets_labels(markets: ccxt.Exchange.markets, chosen_assets: li
 
     return results
 
-
 async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: bool, chosen_assets: list[str]) \
         -> list[market_models.Market]:
     """Функция форматирует список markets, который возвращает ccxt, в список объектов Market
@@ -95,22 +85,14 @@ async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: b
                 market_models.Market(
                     exchange_symbol=market['id'],
                     common_symbol=market['symbol'],
-                    # точность и округление: принятым форматом является float.
-                    # если точность представлена в виде int (кол-во знаков после запятой), конвертирую
-                    price_increment=(
-                        convert_precision(market['precision']['price'])
-                        if is_decimal_precision
-                        else market['precision']['price']
+                    precision=market_models.Market.Precision(
+                        price=(handle_precision(market['precision']['price'], is_decimal_precision)),
+                        amount=(handle_precision(market['precision']['amount'], is_decimal_precision)),
+                        cost=(handle_precision(market['precision'].get('cost'), is_decimal_precision)),
                     ),
-                    # точность и округление: принятым форматом является float.
-                    # если точность представлена в виде int (кол-во знаков после запятой), конвертирую
-                    amount_increment=(
-                        convert_precision(market['precision']['amount'])
-                        if is_decimal_precision
-                        else market['precision']['amount']
+                    limits=market_models.Market.Limits(
+                       **market['limits']
                     ),
-                    min_amount=market['limits']['amount']['min'],
-                    max_amount=market['limits']['amount']['max'],
                     base_asset=market['baseId'],
                     quote_asset=market['quoteId']
                 )

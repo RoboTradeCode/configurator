@@ -7,8 +7,7 @@
 import json
 import os
 import time
-
-from pydantic.main import BaseModel, create_model
+from typing import Any
 
 from src.logger.logger import logger
 
@@ -121,3 +120,46 @@ def check_dict_to_missing_fields(checking_dict: dict, expected_keys: list[str]) 
     for key in expected_keys:
         if key not in checking_dict.keys():
             return True
+
+
+def get_precision(num: float) -> int:
+    """Функция возвращает количество символов после запятой"""
+    str_num = float_to_str(num)
+    if '.' not in str_num:
+        return 0
+
+    # Получение строки после точки и возвращение ее длины
+    return len(str_num[str_num.index('.') + 1:])
+
+
+def float_to_str(f):
+    float_string = repr(f)
+    if 'e' in float_string:  # detect scientific notation
+        digits, exp = float_string.split('e')
+        digits = digits.replace('.', '').replace('-', '')
+        exp = int(exp)
+        zero_padding = '0' * (abs(int(exp)) - 1)  # minus 1 for decimal point in the sci notation
+        sign = '-' if f < 0 else ''
+        if exp > 0:
+            float_string = '{}{}{}.0'.format(sign, digits, zero_padding)
+        else:
+            float_string = '{}0.{}{}'.format(sign, zero_padding, digits)
+    return float_string
+
+
+def convert_precision(precision: int) -> float:
+    """Функция конвертирует int знаков после запятой в float,
+    т.е. конвертирует 3 -> 0.001, 1 -> 0.1
+
+    :param precision: int - точность, которую нужно конвертировать
+    :return: float - преобразованная точность, в виде float
+    """
+    return float('0.' + '0' * (precision - 1) + '1')
+
+
+def handle_precision(num, is_decimal_precision: bool) -> float | None | Any:
+    if num is None:
+        return None
+    if is_decimal_precision:
+        return convert_precision(num)
+    return num
