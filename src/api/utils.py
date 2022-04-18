@@ -9,7 +9,7 @@ import os
 import time
 from typing import Any
 
-from responses_models.api_errors import JsonDecodeError
+from src.responses_models.api_errors import JsonDecodeError
 from src.logger.logger import logger
 
 # словарь для хранения времени последнего обновления конфигурации core и gate
