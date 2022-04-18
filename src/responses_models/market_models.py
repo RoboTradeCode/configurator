@@ -27,11 +27,6 @@ class AssetLabel(BaseModel):
 # base_asset: str - базовый актив
 # quote_asset: str - котируемый актив
 class Market(BaseModel):
-    class Precision(BaseModel):
-        price: Optional[float]
-        amount: Optional[float]
-        cost: Optional[float]
-
     class Limits(BaseModel):
         class MinMax(BaseModel):
             min: Optional[float]
@@ -43,7 +38,8 @@ class Market(BaseModel):
 
     exchange_symbol: str
     common_symbol: str
-    precision: Precision
+    price_increment: Optional[float]
+    amount_increment: Optional[float]
     limits: Limits
     base_asset: str
     quote_asset: str

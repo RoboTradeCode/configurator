@@ -85,11 +85,8 @@ async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: b
                 market_models.Market(
                     exchange_symbol=market['id'],
                     common_symbol=market['symbol'],
-                    precision=market_models.Market.Precision(
-                        price=(handle_precision(market['precision']['price'], is_decimal_precision)),
-                        amount=(handle_precision(market['precision']['amount'], is_decimal_precision)),
-                        cost=(handle_precision(market['precision'].get('cost'), is_decimal_precision)),
-                    ),
+                    price_increment=handle_precision(market['precision']['price'], is_decimal_precision),
+                    amount_increment=handle_precision(market['precision']['amount'], is_decimal_precision),
                     limits=market_models.Market.Limits(
                        **market['limits']
                     ),
