@@ -34,11 +34,11 @@ app = fastapi.FastAPI()
 configs_update_time_dict: dict[str, float] = {}
 
 
-@app.get('/{exchange_id}/{instance}')
+@app.get('/{exchange_id}/{instance}', response_model=ConfigsResponse)
 async def endpoint_get_configs(
         exchange_id: str,
         instance: str,
-        only_new: bool | None = True):
+        only_new: bool | None = True) -> ConfigsResponse:
     """ Главный эндпоинт Configurator.
         Возвращает данные, включая: список маркетов, ассетов, торговых маршрутов,
         конфигураций gate и core.
@@ -60,6 +60,13 @@ async def endpoint_get_configs(
     # Загрузка конфигурации для этого эндпоинта
     with open(API_CONFIGURATION_PATH, "rb") as f:
         api_configuration = tomli.load(f)
+
+    default_header = {
+        'exchange': exchange_id,
+        'node': api_configuration["data"]["default"]["node"],
+        'algo': api_configuration["data"]["default"]["algo"],
+        'instance': instance,
+    }
 
     # Имя файла со списком ассетов
     assets_filename = api_configuration["data"]["assets_filename"]
@@ -98,12 +105,6 @@ async def endpoint_get_configs(
     if not os.path.isfile(f'{path_to_config}/{header_filename}'):
         # Автоматически создаю и заполняю файл с описанием полей response, содержащий информацию о полях response
         with open(f'{path_to_config}/{header_filename}', 'w') as header_file:
-            default_header = {
-                'exchange': exchange_id,
-                'node': api_configuration["data"]["default"]["node"],
-                'algo': api_configuration["data"]["default"]["algo"],
-                'instance': instance,
-            }
             json.dump(default_header, header_file, indent=4)
 
         # Уведомляю, что у торгового сервера нет файла с описанием полей response и он создан автоматически.
@@ -114,7 +115,7 @@ async def endpoint_get_configs(
 
     try:
         # Все необходимые проверки пройдены, создаю объект response API
-        response = init_response(f'{path_to_config}/{header_filename}', exchange_id, instance)
+        response = init_response(f'{path_to_config}/{header_filename}', default_header)
     except json.decoder.JSONDecodeError:
         raise JsonDecodeError(f'{path_to_config}/{header_filename}')
 
