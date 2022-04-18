@@ -11,7 +11,7 @@
 import ccxt
 
 import src.responses_models.market_models as market_models
-from api.utils import handle_precision
+from src.api.utils import handle_precision
 
 
 async def format_assets_labels(markets: ccxt.Exchange.markets, chosen_assets: list[str]) \
