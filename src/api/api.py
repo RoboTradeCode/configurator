@@ -16,7 +16,7 @@ from src.logger.logger import logger
 from src.market_data_obtaining.markets import get_exchange_by_id, check_existence_of_exchange, format_markets, \
     format_assets_labels
 from src.market_data_obtaining.routes import construct_routes
-from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, FileNotFound
+from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, FileNotFound, JsonDecodeError
 from src.responses_models.api_responses import ConfigsResponse, ConfigsResponseData, init_response
 from src.settings import PATH_TO_TRADE_SERVERS_CONFIGS, API_CONFIGURATION_PATH
 
@@ -93,16 +93,18 @@ async def endpoint_get_configs(
         logger.error(f'Не найден файл {assets_filename} для {trade_server_name}.')
         raise FileNotFound(trade_server_name, assets_filename)
 
+    print(os.path.isfile(f'{path_to_config}/{header_filename}'))
     # Проверка, есть ли файл с описанием полей response для торгового сервера (если нет, создаю его)
     if not os.path.isfile(f'{path_to_config}/{header_filename}'):
         # Автоматически создаю и заполняю файл с описанием полей response, содержащий информацию о полях response
-        with open(f'{path_to_config}/{header_filename}', 'w') as header:
-            header.write('{'
-                         f'    "exchange": {exchange_id},'
-                         f'    "node": {api_configuration["data"]["default"]["node"]},'
-                         f'    "instance": {instance},'
-                         f'    "algo": {api_configuration["data"]["default"]["algo"]}'
-                         '}')
+        with open(f'{path_to_config}/{header_filename}', 'w') as header_file:
+            default_header = {
+                'exchange': exchange_id,
+                'node': api_configuration["data"]["default"]["node"],
+                'algo': api_configuration["data"]["default"]["algo"],
+                'instance': instance,
+            }
+            json.dump(default_header, header_file, indent=4)
 
         # Уведомляю, что у торгового сервера нет файла с описанием полей response и он создан автоматически.
         logger.warning(f"Не найден файл {header_filename} для {trade_server_name}. Он был и заполнен автоматически.")
@@ -110,15 +112,22 @@ async def endpoint_get_configs(
     # Проверка, есть ли обновления конфигурации (обновилась ли с последнего запроса)
     is_configs_updated = check_update_of_dir(path_to_config)
 
-    # Все необходимые проверки пройдены, создаю объект response API
-    response = init_response(f'{path_to_config}/{header_filename}', exchange_id, instance)
+    try:
+        # Все необходимые проверки пройдены, создаю объект response API
+        response = init_response(f'{path_to_config}/{header_filename}', exchange_id, instance)
+    except json.decoder.JSONDecodeError:
+        raise JsonDecodeError(f'{path_to_config}/{header_filename}')
 
     response.event = api_configuration['endpoint']['main']['event']
     response.timestamp = get_micro_timestamp()
 
     # Если конфигурация обновилась, или можно вернуть не обновленную конфигурацию, собираю данные для ответа
     if is_configs_updated or not only_new:
-        response.data = await collect_configs_data(exchange_id, path_to_config, assets_filename)
+        try:
+            response.data = await collect_configs_data(exchange_id, path_to_config, assets_filename)
+        except JsonDecodeError as e:
+            raise e
+
         response.message = api_configuration['endpoint']['main']['fresh']['message']
         response.action = api_configuration['endpoint']['main']['fresh']['action']
         logger.info(f'Собраны все данные.')
@@ -176,6 +185,8 @@ async def collect_configs_data(exchange_id: str, path_to_config: str, assets_fil
 
     # 6. Получение configs - файлы JSON, находящиеся в директории внутри конфигурации торгового сервера
     configs = get_jsons_from_dir(f'{path_to_config}/sections/')
+
+
     logger.info(f'Файлы из папки {path_to_config}/sections/ загружены.')
 
     # 7. Объединяю собранные данные в один объект ConfigsResponseData

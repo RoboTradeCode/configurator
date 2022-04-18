@@ -9,6 +9,7 @@ import os
 import time
 from typing import Any
 
+from responses_models.api_errors import JsonDecodeError
 from src.logger.logger import logger
 
 # словарь для хранения времени последнего обновления конфигурации core и gate
@@ -83,6 +84,7 @@ def get_jsons_from_dir(path_to_dir: str) -> dict:
             files_content.append(current_file_content)
         except Exception as e:
             logger.error(f'Не удалось прочитать {path_to_dir}{file_name}. Error: {e}')
+            raise JsonDecodeError(f'{path_to_dir}{file_name}')
 
     # Создание словаря с соответствием [Имя_файла : Содержимое_файла]
     result = dict(zip([os.path.splitext(file)[0] for file in files], files_content))

@@ -11,6 +11,7 @@ from typing import Optional
 from pydantic import BaseModel, Field
 from pydantic.main import create_model
 
+from src.logger.logger import logger
 from src.responses_models.market_models import AssetLabel, Market
 from src.api.utils import check_dict_to_missing_fields, check_dict_to_unexpected_fields
 
@@ -70,7 +71,11 @@ def init_response(path_to_header_file: str, exchange_id: str, instance: str):
     поля будут соответствовать ConfigsResponse.
     """
     with open(f'{path_to_header_file}', 'r') as header_file:
-        header_data: dict = json.load(header_file)
+        try:
+            header_data: dict = json.load(header_file)
+        except json.decoder.JSONDecodeError as e:
+            logger.error(f'Error with decoding json {path_to_header_file}. Error: {e}')
+            raise e
 
         _response_model = ConfigsResponse.with_fields(**header_data)
         response = _response_model(**header_data)

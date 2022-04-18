@@ -51,13 +51,14 @@ class FileNotFound(fastapi.HTTPException):
 # Если возникло это исключение, значит проблема с форматом конфига.
 # Может быть возвращен API в качестве ответа
 class JsonDecodeError(fastapi.HTTPException):
-    def __init__(self, trade_server_name: str):
+    def __init__(self, path_to_file: str):
         self.status_code = 500
         self.detail = {
                 "title": f'Ошибка при получении данных.',
-                "detail": f'Не удалось обработать конфигурацию для «/{trade_server_name}». '
-                          f'Пожалуйста, проверьте формат конфигурации на сервере.'
+                "detail": f'Не удалось обработать конфигурацию. '
+                          f'Пожалуйста, проверьте файл {path_to_file} на сервере.'
             }
+
 
 # Класс исключения, проблема с чтением конфигурации core или gate.
 # Если возникло это исключение, значит проблема с форматом конфига.
