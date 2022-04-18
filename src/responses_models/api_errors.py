@@ -26,36 +26,50 @@ class ExchangeNotFound(fastapi.HTTPException):
 class ConfigsNotFound(fastapi.HTTPException):
     # exchange_id: str - название биржи
     # instance: str - номер инстанса торговой системы
-    def __init__(self, exchange_id: str, instance: str):
+    def __init__(self, trade_server_name: str):
         self.status_code = 404
         self.detail = {
                 "title": f'Конфигурация не найдена.',
-                "detail": f'Не найдена конфигурация для gate или core «/{exchange_id}/{instance}».'
+                "detail": f'Не найдена конфигурация для «/{trade_server_name}».'
             }
+
+
+# Класс исключения, не найден необходимый файл конфигурации для торгового сервера.
+# Может быть возвращен API в качестве ответа
+class FileNotFound(fastapi.HTTPException):
+    # exchange_id: str - название биржи
+    # instance: str - номер инстанса торговой системы
+    def __init__(self, trade_server_name: str, filename: str):
+        self.status_code = 500
+        self.detail = {
+                "title": f'Не найден необходимый файл «{filename}».',
+                "detail": f'Не найден файл «{filename}» по пути «{trade_server_name}/{filename}».'
+        }
 
 
 # Класс исключения, проблема с чтением конфигурации core или gate.
 # Если возникло это исключение, значит проблема с форматом конфига.
 # Может быть возвращен API в качестве ответа
 class JsonDecodeError(fastapi.HTTPException):
-    def __init__(self, exchange_id: str, instance: str):
+    def __init__(self, path_to_file: str):
         self.status_code = 500
         self.detail = {
                 "title": f'Ошибка при получении данных.',
-                "detail": f'Не удалось обработать конфигурацию для «/{exchange_id}/{instance}». '
-                          f'Пожалуйста, проверьте формат конфигурации на сервере.'
+                "detail": f'Не удалось обработать конфигурацию. '
+                          f'Пожалуйста, проверьте файл {path_to_file} на сервере.'
             }
+
 
 # Класс исключения, проблема с чтением конфигурации core или gate.
 # Если возникло это исключение, значит проблема с форматом конфига.
 # Может быть возвращен API в качестве ответа
 class ConfigDecodeError(fastapi.HTTPException):
-    def __init__(self, exchange_id: str, instance: str):
+    def __init__(self, trade_server_name: str):
         self.status_code = 500
         self.detail = {
                 "title": f'Ошибка при получении данных.',
                 "detail": f'Не удалось сформировать данные для '
-                          f'«/{exchange_id}/{instance}».'
+                          f'«/{trade_server_name}».'
             }
 
 
