@@ -6,9 +6,11 @@
 """
 import json
 import os.path
+import typing
 
 import ccxt
 import fastapi
+from fastapi.responses import JSONResponse
 import tomli as tomli
 
 from src.api.utils import get_jsons_from_dir, get_micro_timestamp, check_update_of_dir
@@ -34,7 +36,18 @@ app = fastapi.FastAPI()
 configs_update_time_dict: dict[str, float] = {}
 
 
-@app.get('/{exchange_id}/{instance}', response_model=ConfigsResponse)
+class IndentedEncoder(JSONResponse):
+    def render(self, content: typing.Any) -> bytes:
+        return json.dumps(
+            content,
+            ensure_ascii=False,
+            allow_nan=False,
+            indent=4,
+            separators=(",", ":"),
+        ).encode("utf-8")
+
+
+@app.get('/{exchange_id}/{instance}', response_model=ConfigsResponse, response_class=IndentedEncoder)
 async def endpoint_get_configs(
         exchange_id: str,
         instance: str,
@@ -100,7 +113,6 @@ async def endpoint_get_configs(
         logger.error(f'Не найден файл {assets_filename} для {trade_server_name}.')
         raise FileNotFound(trade_server_name, assets_filename)
 
-    print(os.path.isfile(f'{path_to_config}/{header_filename}'))
     # Проверка, есть ли файл с описанием полей response для торгового сервера (если нет, создаю его)
     if not os.path.isfile(f'{path_to_config}/{header_filename}'):
         # Автоматически создаю и заполняю файл с описанием полей response, содержащий информацию о полях response
@@ -115,7 +127,7 @@ async def endpoint_get_configs(
 
     try:
         # Все необходимые проверки пройдены, создаю объект response API
-        response = init_response(f'{path_to_config}/{header_filename}', default_header)
+        response: ConfigsResponse = init_response(f'{path_to_config}/{header_filename}', default_header)
     except json.decoder.JSONDecodeError:
         raise JsonDecodeError(f'{path_to_config}/{header_filename}')
 

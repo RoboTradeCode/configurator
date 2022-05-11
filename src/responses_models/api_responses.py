@@ -21,7 +21,7 @@ from src.api.utils import check_dict_to_missing_fields, check_dict_to_unexpected
 # common_symbol: str - Название торговой пары (маркета)
 # operation: str - Указание, нужно произвести покупку или продажу с торговой парой (маркетом), "buy" или "sell"
 class RouteStep(BaseModel):
-    source_asset: str
+    source_asset: str | None
     common_symbol: str
     operation: str
 
@@ -57,6 +57,7 @@ def init_response(path_to_header_file: str, default_header: dict):
     """Функция для получения основных полей response Configurator API и
     обработки недостающих полей в файле header.json
 
+    :param default_header:
     :param path_to_header_file: путь к файлу json с оснонвыми полями для response. Обычно это файл header.json
     :param exchange_id: название биржи. Используется, если в header.json не выставлено значение.
     :param instance: название инстанса. Используется, если в header.json не выставлено значение.
