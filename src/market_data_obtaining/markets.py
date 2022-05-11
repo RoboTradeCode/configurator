@@ -59,6 +59,7 @@ async def format_assets_labels(markets: ccxt.Exchange.markets, chosen_assets: li
 
     return results
 
+
 async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: bool, chosen_assets: list[str]) \
         -> list[market_models.Market]:
     """Функция форматирует список markets, который возвращает ccxt, в список объектов Market
@@ -79,7 +80,8 @@ async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: b
     for market in markets.values():
         # Проверяю, нужно ли мне обрабатывать этот ассет (есть ли он среди выбранных)
         if market['baseId'] in chosen_assets and \
-                market['quoteId'] in chosen_assets:
+                market['quoteId'] in chosen_assets and \
+                market['type'] == 'spot':
             # в итоговый список добавляются объекты Market, собранные из данных списка markets
             results.append(
                 market_models.Market(
