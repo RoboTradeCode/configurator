@@ -1,4 +1,7 @@
 {
+  "cross_3t_php": {
+    "deal_amount": "232323"
+  },
   "exchange": {
     "btc_threshold": "0.0008",
     "buy_ratio": "0.9985",
