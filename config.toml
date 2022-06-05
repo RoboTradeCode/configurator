@@ -44,16 +44,16 @@
             stream = "ext://sys.stdout"
 
 #       параметры обработчика для публикации логов в Aeron
-        [logging.handlers.aeron]
-            "()" = "src.logger.aeron_handler.AeronHandler"
+#        [logging.handlers.aeron]
+#            "()" = "src.logger.aeron_handler.AeronHandler"
 #           уровень отправления логов (выше этого уровня включительно)
-            level = "WARNING"
+#            level = "WARNING"
 #           канал для публикации логов
-            channel = "aeron:ipc"
+#            channel = "aeron:ipc"
 #           id потока для публикации логов
-            stream_id = 1004
+#            stream_id = 1004
 #           указать форматтер для сообщений
-            formatter = "default"
+#            formatter = "default"
 
         [logging.handlers.logfile]
             class = "logging.handlers.RotatingFileHandler"
@@ -66,6 +66,6 @@
 
     [logging.root]
         level = "INFO"
-        handlers = ["logfile", "stdout", "aeron"]
+        handlers = ["logfile", "stdout"]
 
 

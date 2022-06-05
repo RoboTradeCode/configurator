@@ -102,7 +102,6 @@ def construct_routes(markets: list[Market], assets: list[str], routes_max_length
     for i in range(3, routes_max_length + 1):
         # Перестановки маркетов (торговых пар) внутри последовательности
         for sequence in itertools.permutations(markets_dicts, i):
-            print(sequence)
             # Пробую преобразовать последовательность маркетов (торговых пар) в торговый маршрут
             route, is_valid_route = route_sequence_to_route(sequence)
             # Если удалось преобразовать, сохраняю полученный торговый маршрут
