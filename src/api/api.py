@@ -51,7 +51,8 @@ class IndentedEncoder(JSONResponse):
 async def endpoint_get_configs(
         exchange_id: str,
         instance: str,
-        only_new: bool | None = True) -> ConfigsResponse:
+        only_new: bool = True,
+        routes_max_length: int = 3) -> ConfigsResponse:
     """ Главный эндпоинт Configurator.
         Возвращает данные, включая: список маркетов, ассетов, торговых маршрутов,
         конфигураций gate и core.
@@ -63,6 +64,7 @@ async def endpoint_get_configs(
         Чтобы получить данные вне зависимости от предыдущего условия,
         нужно указать параметр запроса ?only_update=False
 
+    :param routes_max_length: максимальная длина роутов
     :param exchange_id: название биржи (по ccxt).
     :param instance: название инстанса торгового сервера.
     :param only_new: по умолчанию True. Если True, возвращает данные только
@@ -137,7 +139,7 @@ async def endpoint_get_configs(
     # Если конфигурация обновилась, или можно вернуть не обновленную конфигурацию, собираю данные для ответа
     if is_configs_updated or not only_new:
         try:
-            response.data = await collect_configs_data(exchange_id, path_to_config, assets_filename)
+            response.data = await collect_configs_data(exchange_id, path_to_config, assets_filename, routes_max_length)
         except JsonDecodeError as e:
             raise e
 
@@ -156,7 +158,8 @@ async def endpoint_get_configs(
     return response
 
 
-async def collect_configs_data(exchange_id: str, path_to_config: str, assets_filename: str) -> ConfigsResponseData:
+async def collect_configs_data(exchange_id: str, path_to_config: str, assets_filename: str,
+                               routes_max_length: int = 3) -> ConfigsResponseData:
     """ Функция собирает данные для эндпоинта /<exchange_id>/<instance>
 
     Предусловие: биржа exchange_id существует, и доступна через CCXT
@@ -193,22 +196,21 @@ async def collect_configs_data(exchange_id: str, path_to_config: str, assets_fil
     assets_labels = await format_assets_labels(all_markets, traded_assets)
 
     # 5. Составление routes - списки маршрутов по заданным ассетам
-    routes = construct_routes(markets, traded_assets)
+    routes = construct_routes(markets, traded_assets, routes_max_length)
     logger.info(f'Данные о бирже форматированы и построены торговые маршруты.')
 
     # 6. Получение configs - файлы JSON, находящиеся в директории внутри конфигурации торгового сервера
     configs = get_jsons_from_dir(f'{path_to_config}/sections/')
 
-
     logger.info(f'Файлы из папки {path_to_config}/sections/ загружены.')
 
     # 7. Объединяю собранные данные в один объект ConfigsResponseData
     result = ConfigsResponseData(
-            markets=markets,
-            assets_labels=assets_labels,
-            routes=routes,
-            configs=configs
-        )
+        markets=markets,
+        assets_labels=assets_labels,
+        routes=routes,
+        configs=configs
+    )
 
     # 7. Возвращение ответа с данными для response
     return result
@@ -221,7 +223,6 @@ async def get_ping():
     :return: Возвращает тело запроса с полем {"pong": true}
     """
     return {"pong": True}
-
 
     # # Ошибка чтения JSON, не найден файл - скорее всего, нет конфигурации для биржи/инстанса
     # except FileNotFoundError:
@@ -243,4 +244,3 @@ async def get_ping():
     # except Exception as e:
     #     logger.error("Неожиданное исключение во время обработки данных.", exc_info=True)
     #     raise UnexpectedError(exchange_id, e)
-

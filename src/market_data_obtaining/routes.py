@@ -29,7 +29,7 @@ def select_markets_by_assets(markets: list[Market], assets: list[str]) -> list[M
 # param route_sequence: list[list[str]] - последовательность торговый пар
 # return list[list[str]] - получившийся торговый маршрут
 # return bool - возможен ли торговый маршрут (обязательно к проверке в коде, использующем функцию)
-def route_sequence_to_route(route_sequence: tuple[Market]) -> (list[RouteStep], bool):
+def route_sequence_to_route(route_sequence: tuple[dict]) -> (list[RouteStep], bool):
     # 1. Нахожу, какой ассет будет первым
     # 2. Пытаюсь обменять ассеты в заданной последовательности
     # 3. Сверяю, совпадают ли первый и последний ассеты.
@@ -43,10 +43,10 @@ def route_sequence_to_route(route_sequence: tuple[Market]) -> (list[RouteStep], 
     curr_asset: str
 
     # 1. Нахожу, какой ассет будет первым
-    if route_sequence[0].base_asset in [route_sequence[-1].base_asset, route_sequence[-1].quote_asset]:
-        first_asset = route_sequence[0].base_asset
-    elif  route_sequence[0].quote_asset in [route_sequence[-1].base_asset, route_sequence[-1].quote_asset]:
-        first_asset = route_sequence[0].quote_asset
+    if route_sequence[0]['base_asset'] in [route_sequence[-1]['base_asset'], route_sequence[-1]['quote_asset']]:
+        first_asset = route_sequence[0]['base_asset']
+    elif  route_sequence[0]['quote_asset'] in [route_sequence[-1]['base_asset'], route_sequence[-1]['quote_asset']]:
+        first_asset = route_sequence[0]['quote_asset']
     else:
         return result_route, False
 
@@ -54,20 +54,20 @@ def route_sequence_to_route(route_sequence: tuple[Market]) -> (list[RouteStep], 
 
     # 2. Пытаюсь обменять ассеты в заданной последовательности
     for market in route_sequence:
-        if market.base_asset == curr_asset:
+        if market['base_asset'] == curr_asset:
             result_route.append(RouteStep(
                 source_asset=curr_asset,
-                common_symbol=market.common_symbol,
+                common_symbol=market['common_symbol'],
                 operation='sell')
             )
-            curr_asset = market.quote_asset
-        elif market.quote_asset == curr_asset:
+            curr_asset = market['quote_asset']
+        elif market['quote_asset'] == curr_asset:
             result_route.append(RouteStep(
                 source_asset=curr_asset,
-                common_symbol=market.common_symbol,
+                common_symbol=market['common_symbol'],
                 operation='buy')
             )
-            curr_asset = market.base_asset
+            curr_asset = market['base_asset']
         else:
             return result_route, False
 
@@ -85,18 +85,24 @@ def route_sequence_to_route(route_sequence: tuple[Market]) -> (list[RouteStep], 
 # markets: list[Market] - список объектов Market, содержит данные о всех маркетах биржи
 # assets: list[str] - список ассетов, по которым нужно строить торговые маршруты
 # return list[tuple[RouteStep]] - список построенных маршрутов (каждый маршрут - tuple из объектов RouteStep)
-def construct_routes(markets: list[Market], assets: list[str]) -> list[tuple[RouteStep]]:
+def construct_routes(markets: list[Market], assets: list[str], routes_max_length: int) -> list[tuple[RouteStep]]:
     result: list[tuple[RouteStep]] = []
 
     # Выбираю маркеты (торговые пары), в которых участвуют ассеты
     selected_markets = select_markets_by_assets(markets, assets)
 
-    route_number = itertools.count()
+    markets_dicts = [{
+        'common_symbol': market.common_symbol,
+        'base_asset': market.base_asset,
+        'quote_asset': market.quote_asset
+        } for market in selected_markets]
+
     # Перебираю длины путей, которые можно получить из ассетов.
     # Длина пути не может превышать длину списка ассетов, иначе ассеты будут повторяться
-    for i in range(3, len(assets) + 1):
+    for i in range(3, routes_max_length + 1):
         # Перестановки маркетов (торговых пар) внутри последовательности
-        for sequence in itertools.permutations(selected_markets, i):
+        for sequence in itertools.permutations(markets_dicts, i):
+            print(sequence)
             # Пробую преобразовать последовательность маркетов (торговых пар) в торговый маршрут
             route, is_valid_route = route_sequence_to_route(sequence)
             # Если удалось преобразовать, сохраняю полученный торговый маршрут
