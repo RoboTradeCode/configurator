@@ -186,7 +186,11 @@ async def collect_configs_data(exchange_id: str, path_to_config: str, assets_fil
 
     # 2. Загрузка данных о маркетах биржи с помощью CCXT
     exchange = get_exchange_by_id(exchange_id)
-    all_markets: ccxt.Exchange.markets = exchange.load_markets()
+    if exchange_id == 'bybit':
+        all_markets_list: ccxt.Exchange.markets = exchange.fetch_spot_markets({})
+        all_markets = {market['symbol']: market for market in all_markets_list}
+    else:
+        all_markets: ccxt.Exchange.markets = exchange.load_markets()
     logger.info(f'Загружены данные о бирже {exchange_id}.')
 
     # 3. Заполнение объектов markets с информацией о маркетах на бирже
