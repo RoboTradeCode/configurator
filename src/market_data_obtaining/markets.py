@@ -34,25 +34,25 @@ async def format_assets_labels(markets: ccxt.Exchange.markets, chosen_assets: li
     # В цикле перебираются все элементы markets - каждый из них это валютная пара с двумя ассетами
     for market in markets.values():
         # Проверяю, нужно ли мне обрабатывать этот ассет (есть ли он среди выбранных)
-        if market['baseId'] in chosen_assets and \
-                market['quoteId'] in chosen_assets:
+        if market['baseId'].upper() in chosen_assets and \
+                market['quoteId'].upper() in chosen_assets:
             # проверяю, обрабатывал ли я базовый ассет
             if market['baseId'] not in added:
                 # добавляю ассет в списки добавленных ассетов и итоговый список
-                added.append(market['baseId'])
+                added.append(market['baseId'].upper())
                 results.append(
                     market_models.AssetLabel(
-                        exchange=market['baseId'],
+                        exchange=market['baseId'].upper(),
                         common=market['base']
                     )
                 )
             # проверяю, обрабатывал ли я котируемый ассет
-            if market['quoteId'] not in added:
+            if market['quoteId'].upper() not in added:
                 # добавляю ассет в списки добавленных ассетов и итоговый список
-                added.append(market['quoteId'])
+                added.append(market['quoteId'].upper())
                 results.append(
                     market_models.AssetLabel(
-                        exchange=market['quoteId'],
+                        exchange=market['quoteId'].upper(),
                         common=market['quote']
                     )
                 )
