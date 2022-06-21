@@ -81,7 +81,8 @@ async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: b
         # Проверяю, нужно ли мне обрабатывать этот ассет (есть ли он среди выбранных)
         if market['baseId'].upper() in chosen_assets and \
                 market['quoteId'].upper() in chosen_assets and \
-                market['type'].lower() == 'spot':
+                market['type'].lower() == 'spot' and \
+                market['active']:
             # в итоговый список добавляются объекты Market, собранные из данных списка markets
             results.append(
                 market_models.Market(
