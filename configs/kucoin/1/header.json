@@ -1,6 +1,0 @@
-{
-  "exchange": "kucoin",
-  "node": "configurator",
-  "instance": "1",
-  "algo": "spread_bot_cpp"
-}
