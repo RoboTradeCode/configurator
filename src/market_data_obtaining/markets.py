@@ -82,7 +82,7 @@ async def format_markets(markets: ccxt.Exchange.markets, is_decimal_precision: b
         if market['baseId'].upper() in chosen_assets and \
                 market['quoteId'].upper() in chosen_assets and \
                 market['type'].lower() == 'spot' and \
-                market['active']:
+                (market['active'] is True or market['active'] is None):
             # в итоговый список добавляются объекты Market, собранные из данных списка markets
             results.append(
                 market_models.Market(
