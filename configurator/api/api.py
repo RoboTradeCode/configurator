@@ -189,6 +189,8 @@ async def collect_configs_data(exchange_id: str, path_to_config: str, assets_fil
     if exchange_id == 'bybit':
         all_markets_list: ccxt.Exchange.markets = exchange.fetch_spot_markets({})
         all_markets = {market['symbol']: market for market in all_markets_list}
+    elif exchange_id == 'kuna':
+        all_markets: ccxt.Exchange.markets = exchange.load_markets({'version': '3'})
     else:
         all_markets: ccxt.Exchange.markets = exchange.load_markets()
     logger.info(f'Загружены данные о бирже {exchange_id}.')
