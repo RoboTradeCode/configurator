@@ -1,3 +1,7 @@
+from decimal import Decimal
+from itertools import chain
+
+
 def load_markets_from_kuna() -> dict:
     """
     Kuna markets structure
@@ -42,18 +46,23 @@ def get_limits_from_order_book(order_book: dict) -> dict:
 
 
 def get_increments_from_order_book(order_book: dict) -> (float, float):
-    """Get price increment of market by order book values"""
-    price_increment: float = 0
-    amount_increment: float = 0
-    last_price: float = 0
-    last_volume: float = 0
-    for price, volume in chain(order_book['bids'].values, order_book['asks'].values):
+    """Get price increment of market by order book values
+
+    :return: price_increment, amount_increment
+    """
+    price_increment: Decimal = Decimal(0)
+    amount_increment: Decimal = Decimal(0)
+    last_price = Decimal(0)
+    last_volume = Decimal(0)
+    for price, volume in chain(order_book['bids'], order_book['asks']):
+        price = Decimal(str(price))
+        volume = Decimal(str(volume))
         current_price_increment = abs(price - last_price)
-        if price_increment > current_price_increment:
+        if price_increment > current_price_increment or price_increment == 0:
             price_increment = current_price_increment
         current_amount_increment = abs(volume - last_volume)
-        if amount_increment > current_amount_increment:
+        if amount_increment > current_amount_increment or amount_increment == 0:
             amount_increment = current_amount_increment
         last_volume = volume
         last_price = price
-    return price_increment, amount_increment
+    return price_increment.__float__(), amount_increment.__float__()
