@@ -94,16 +94,3 @@ async def refine_limits_in_one_market(exchange, market: Market) -> Market:
     order_book = await exchange.fetch_order_book(symbol=market.common_symbol)
     limits = get_limits(OrderBook(**order_book)).dict()
     return Market(**{**market.dict(), **{k: v for k, v in limits.items() if v}})
-
-
-    # market.price_increment = limits.price_increment if market.price_increment is None else market.price_increment
-    # market.amount_increment = limits.amount_increment if market.amount_increment is None else market.amount_increment
-    #
-    # market.limits.price.min = limits.limits.price.min if market.limits.price.min is None else market.limits.price.min
-    # market.limits.price.max = limits.limits.price.max if market.limits.price.max is None else market.limits.price.max
-    #
-    # market.limits.amount.min = limits.limits.amount.min if market.limits.amount.min is None else market.limits.amount.min
-    # market.limits.amount.max = limits.limits.amount.max if market.limits.amount.max is None else market.limits.amount.max
-    #
-    # market.limits.cost.min = limits.limits.cost.min if market.limits.cost.min is None else market.limits.cost.min
-    # market.limits.cost.max = limits.limits.cost.max if market.limits.cost.max is None else market.limits.cost.max
