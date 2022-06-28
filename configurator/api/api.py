@@ -13,14 +13,14 @@ import fastapi
 from fastapi.responses import JSONResponse
 import tomli as tomli
 
-from src.api.utils import get_jsons_from_dir, get_micro_timestamp, check_update_of_dir
-from src.logger.logger import logger
-from src.market_data_obtaining.markets import get_exchange_by_id, check_existence_of_exchange, format_markets, \
+from configurator.api.utils import get_jsons_from_dir, get_micro_timestamp, check_update_of_dir
+from configurator.logger.logger import logger
+from configurator.market_data_obtaining.markets import get_exchange_by_id, check_existence_of_exchange, format_markets, \
     format_assets_labels
-from src.market_data_obtaining.routes import construct_routes
-from src.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, FileNotFound, JsonDecodeError
-from src.responses_models.api_responses import ConfigsResponse, ConfigsResponseData, init_response
-from src.settings import PATH_TO_TRADE_SERVERS_CONFIGS, API_CONFIGURATION_PATH
+from configurator.market_data_obtaining.routes import construct_routes
+from configurator.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, FileNotFound, JsonDecodeError
+from configurator.responses_models.api_responses import ConfigsResponse, ConfigsResponseData, init_response
+from configurator.settings import PATH_TO_TRADE_SERVERS_CONFIGS, API_CONFIGURATION_PATH
 
 # Путь до директории с конфигурациями торговых серверов
 path_to_trade_servers_configs = PATH_TO_TRADE_SERVERS_CONFIGS

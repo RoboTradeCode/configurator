@@ -11,9 +11,9 @@ from typing import Optional
 from pydantic import BaseModel, Field
 from pydantic.main import create_model
 
-from src.logger.logger import logger
-from src.responses_models.market_models import AssetLabel, Market
-from src.api.utils import check_dict_to_missing_fields, check_dict_to_unexpected_fields
+from configurator.logger.logger import logger
+from configurator.responses_models.market_models import AssetLabel, Market
+from configurator.api.utils import check_dict_to_missing_fields, check_dict_to_unexpected_fields
 
 
 # Класс для описания одного шага Торгового маршрута

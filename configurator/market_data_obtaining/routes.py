@@ -7,8 +7,8 @@
 import itertools
 from pprint import pprint
 
-from src.responses_models.api_responses import RouteStep
-from src.responses_models.market_models import Market
+from configurator.responses_models.api_responses import RouteStep
+from configurator.responses_models.market_models import Market
 
 
 # Функция фильтрует маркеты, оставляет только те, в которых базовый и котируемый ассеты есть в списке assets.

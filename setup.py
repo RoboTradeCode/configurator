@@ -6,8 +6,8 @@
 """
 import uvicorn
 
-from src.api.api import app
-from src.settings import LOGGING_CONFIG
+from configurator.api.api import app
+from configurator.settings import LOGGING_CONFIG
 
 if __name__ == '__main__':
     # запуск сервера

@@ -9,8 +9,8 @@ import os
 import time
 from typing import Any
 
-from src.responses_models.api_errors import JsonDecodeError
-from src.logger.logger import logger
+from configurator.responses_models.api_errors import JsonDecodeError
+from configurator.logger.logger import logger
 
 # словарь для хранения времени последнего обновления конфигурации core и gate
 # строится следующим образом:

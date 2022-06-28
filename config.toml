@@ -45,7 +45,7 @@
 
 #       параметры обработчика для публикации логов в Aeron
 #        [logging.handlers.aeron]
-#            "()" = "src.logger.aeron_handler.AeronHandler"
+#            "()" = "configurator.logger.aeron_handler.AeronHandler"
 #           уровень отправления логов (выше этого уровня включительно)
 #            level = "WARNING"
 #           канал для публикации логов
