@@ -1,6 +1,7 @@
-ccxt~=1.76.48
 fastapi~=0.75.0
 pydantic~=1.9.0
 uvicorn~=0.17.6
 tomli~=2.0.1
 aeron @ git+https://github.com/RoboTradeCode/aeron-python.git
+ccxtpro @ git+https://github.com/RoboTradeCode/aax-ccxt.pro.git#subdirectory=python
+pytest~=7.1.2
