@@ -8,18 +8,16 @@ import json
 import os.path
 import typing
 
-import ccxt
 import fastapi
 from fastapi.responses import JSONResponse
 import tomli as tomli
 
-from configurator.api.utils import get_jsons_from_dir, get_micro_timestamp, check_update_of_dir
+from configurator.api.data_collecting import collect_configs_data
+from configurator.api.utils import get_micro_timestamp, check_update_of_dir
 from configurator.logger.logger import logger
-from configurator.market_data_obtaining.markets import get_exchange_by_id, check_existence_of_exchange, format_markets, \
-    format_assets_labels
-from configurator.market_data_obtaining.routes import construct_routes
+from configurator.market_data_obtaining.markets import check_existence_of_exchange
 from configurator.responses_models.api_errors import ExchangeNotFound, ConfigsNotFound, FileNotFound, JsonDecodeError
-from configurator.responses_models.api_responses import ConfigsResponse, ConfigsResponseData, init_response
+from configurator.responses_models.api_responses import ConfigsResponse, init_response
 from configurator.settings import PATH_TO_TRADE_SERVERS_CONFIGS, API_CONFIGURATION_PATH
 
 # Путь до директории с конфигурациями торговых серверов
@@ -52,7 +50,8 @@ async def endpoint_get_configs(
         exchange_id: str,
         instance: str,
         only_new: bool = True,
-        routes_max_length: int = 3) -> ConfigsResponse:
+        routes_max_length: int = 3,
+        limits_by_order_book=False) -> ConfigsResponse:
     """ Главный эндпоинт Configurator.
         Возвращает данные, включая: список маркетов, ассетов, торговых маршрутов,
         конфигураций gate и core.
@@ -65,6 +64,7 @@ async def endpoint_get_configs(
         нужно указать параметр запроса ?only_update=False
 
     :param routes_max_length: максимальная длина роутов
+    :param limits_by_order_book: нужно ли уточнять значения ограничения с помощью ордер-буков
     :param exchange_id: название биржи (по ccxt).
     :param instance: название инстанса торгового сервера.
     :param only_new: по умолчанию True. Если True, возвращает данные только
@@ -139,7 +139,8 @@ async def endpoint_get_configs(
     # Если конфигурация обновилась, или можно вернуть не обновленную конфигурацию, собираю данные для ответа
     if is_configs_updated or not only_new:
         try:
-            response.data = await collect_configs_data(exchange_id, path_to_config, assets_filename, routes_max_length)
+            response.data = await collect_configs_data(exchange_id, path_to_config, assets_filename, routes_max_length,
+                                                       limits_by_order_book=limits_by_order_book)
         except JsonDecodeError as e:
             raise e
 
@@ -156,70 +157,6 @@ async def endpoint_get_configs(
 
     # Возвращаю ответ на запрос
     return response
-
-
-async def collect_configs_data(exchange_id: str, path_to_config: str, assets_filename: str,
-                               routes_max_length: int = 3) -> ConfigsResponseData:
-    """ Функция собирает данные для эндпоинта /<exchange_id>/<instance>
-
-    Предусловие: биржа exchange_id существует, и доступна через CCXT
-    Предусловие: директорий, указанная в path_to_config существует и содержит необходимые данные
-
-    Алгоритм загрузки данных:
-        1. Чтение файла assets.txt для получения списка ассетов, которые нужно обрабатывать
-        2. Получение данных о маркетах биржи с помощью CCXT
-        3. Заполнение объектов markets с информацией о маркетах на бирже
-        4. Заполнение объектов assets_labels со списком названий ассетов (стандартное название / название на бирже)
-        5. Составление routes - списки маршрутов по заданным ассетам
-        6. Получение configs - файлы JSON, находящиеся в директории внутри конфигурации торгового сервера
-        7. Объединяю собранные данные в один объект ConfigsResponseData
-        8. Возвращение ответа с данными для response
-
-    :param assets_filename: название файла, в котором находится список ассетов.
-    :param path_to_config: путь до директории конфигурации торгового сервера (формат <exchange_id>/<instance>/)
-    :param exchange_id: название биржи по ccxt
-    :return: заполненный объект ConfigsResponseData, содержащий данные для response
-    """
-    # 1. Чтение файла assets.txt для получения списка ассетов, которые нужно обрабатывать
-    with open(f'{path_to_config}/{assets_filename}') as assets:
-        traded_assets = assets.read().replace('\n', '').split(', ')
-
-    # 2. Загрузка данных о маркетах биржи с помощью CCXT
-    exchange = get_exchange_by_id(exchange_id)
-    if exchange_id == 'bybit':
-        all_markets_list: ccxt.Exchange.markets = exchange.fetch_spot_markets({})
-        all_markets = {market['symbol']: market for market in all_markets_list}
-    elif exchange_id == 'kuna':
-        all_markets: ccxt.Exchange.markets = exchange.load_markets({'version': '3'})
-    else:
-        all_markets: ccxt.Exchange.markets = exchange.load_markets()
-    logger.info(f'Загружены данные о бирже {exchange_id}.')
-
-    # 3. Заполнение объектов markets с информацией о маркетах на бирже
-    markets = await format_markets(all_markets, exchange.precisionMode == ccxt.DECIMAL_PLACES, traded_assets)
-
-    # 4. Заполнение объектов assets_labels со списком названий ассетов (стандартное название / название на бирже)
-    assets_labels = await format_assets_labels(all_markets, traded_assets)
-
-    # 5. Составление routes - списки маршрутов по заданным ассетам
-    routes = construct_routes(markets, traded_assets, routes_max_length)
-    logger.info(f'Данные о бирже форматированы и построены торговые маршруты.')
-
-    # 6. Получение configs - файлы JSON, находящиеся в директории внутри конфигурации торгового сервера
-    configs = get_jsons_from_dir(f'{path_to_config}/sections/')
-
-    logger.info(f'Файлы из папки {path_to_config}/sections/ загружены.')
-
-    # 7. Объединяю собранные данные в один объект ConfigsResponseData
-    result = ConfigsResponseData(
-        markets=markets,
-        assets_labels=assets_labels,
-        routes=routes,
-        configs=configs
-    )
-
-    # 7. Возвращение ответа с данными для response
-    return result
 
 
 @app.get('/ping')
