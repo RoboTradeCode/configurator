@@ -51,7 +51,7 @@ async def endpoint_get_configs(
         instance: str,
         only_new: bool = True,
         routes_max_length: int = 3,
-        limits_by_order_book: bool = False) -> ConfigsResponse:
+        limits_by_order_book: bool = None) -> ConfigsResponse:
     """ Главный эндпоинт Configurator.
         Возвращает данные, включая: список маркетов, ассетов, торговых маршрутов,
         конфигураций gate и core.

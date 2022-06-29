@@ -55,7 +55,8 @@ async def collect_configs_data(exchange_id: str, path_to_config: str, assets_fil
     # 3. Заполнение объектов markets с информацией о маркетах на бирже
     markets = await format_markets(all_markets, exchange.precisionMode == ccxt.DECIMAL_PLACES, traded_assets)
 
-    if limits_by_order_book:
+    if limits_by_order_book is None and (markets[0].amount_increment is None or markets[0].price_increment is None) or \
+            limits_by_order_book:
         markets = await refine_limits(exchange_id=exchange_id, markets=markets)
 
     # 4. Заполнение объектов assets_labels со списком названий ассетов (стандартное название / название на бирже)
