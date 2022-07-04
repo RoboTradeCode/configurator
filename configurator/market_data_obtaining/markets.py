@@ -37,7 +37,7 @@ async def format_assets_labels(markets: ccxt.Exchange.markets, chosen_assets: li
         if market['baseId'].upper() in chosen_assets and \
                 market['quoteId'].upper() in chosen_assets:
             # проверяю, обрабатывал ли я базовый ассет
-            if market['baseId'] not in added:
+            if market['baseId'].upper() not in added:
                 # добавляю ассет в списки добавленных ассетов и итоговый список
                 added.append(market['baseId'].upper())
                 results.append(
